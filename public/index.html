@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dresscode is a virtual styling studio for visualising event outfits on an uploaded model photo.">
+  <meta name="theme-color" content="#171717">
+  <title>Dresscode Virtual Stylist</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Dresscode home">
+      <span class="brand-mark" aria-hidden="true">D</span>
+      <span>
+        <strong>Dresscode</strong>
+        <small>Virtual fitting studio</small>
+      </span>
+    </a>
+    <span id="providerBadge" class="status-badge">Checking generation mode…</span>
+  </header>
+
+  <main id="top" class="app-shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Design before you tailor</p>
+        <h1>Turn an outfit idea into a visual fitting concept.</h1>
+        <p class="hero-copy">Upload a model photo, add measurements in centimetres or inches, describe the look, and include an inspiration image when you have one.</p>
+      </div>
+      <div class="hero-note">
+        <strong>Prototype + production hook</strong>
+        <span>The built-in renderer creates a concept overlay. Connect a virtual try-on provider for photorealistic output.</span>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <section class="control-column" aria-label="Outfit design controls">
+        <section class="panel step-panel">
+          <div class="step-heading">
+            <span class="step-number">1</span>
+            <div>
+              <h2>Upload model photo</h2>
+              <p>A full-body, front-facing image gives the best result.</p>
+            </div>
+          </div>
+
+          <div id="modelDropzone" class="dropzone">
+            <input id="modelUpload" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp">
+            <button id="modelChooseButton" class="button button-primary" type="button">Choose model photo</button>
+            <span>or drag and drop JPG, PNG or WEBP</span>
+            <strong id="modelFileName" class="file-name"></strong>
+          </div>
+        </section>
+
+        <section class="panel step-panel">
+          <div class="step-heading split-heading">
+            <div class="heading-with-number">
+              <span class="step-number">2</span>
+              <div>
+                <h2>Add measurements</h2>
+                <p>Only enter what you know. Empty fields are ignored.</p>
+              </div>
+            </div>
+            <div class="segmented-control" aria-label="Measurement unit">
+              <button id="unitCm" type="button" aria-pressed="true">cm</button>
+              <button id="unitIn" type="button" aria-pressed="false">in</button>
+            </div>
+          </div>
+
+          <div class="measurement-grid">
+            <label>
+              <span>Height</span>
+              <div class="unit-input"><input id="height" inputmode="decimal" type="number" min="0" step="0.1" placeholder="170"><b class="unit-label">cm</b></div>
+            </label>
+            <label>
+              <span>Chest / bust</span>
+              <div class="unit-input"><input id="chest" inputmode="decimal" type="number" min="0" step="0.1" placeholder="92"><b class="unit-label">cm</b></div>
+            </label>
+            <label>
+              <span>Waist</span>
+              <div class="unit-input"><input id="waist" inputmode="decimal" type="number" min="0" step="0.1" placeholder="74"><b class="unit-label">cm</b></div>
+            </label>
+            <label>
+              <span>Hips</span>
+              <div class="unit-input"><input id="hips" inputmode="decimal" type="number" min="0" step="0.1" placeholder="100"><b class="unit-label">cm</b></div>
+            </label>
+            <label>
+              <span>Shoulder width</span>
+              <div class="unit-input"><input id="shoulder" inputmode="decimal" type="number" min="0" step="0.1" placeholder="42"><b class="unit-label">cm</b></div>
+            </label>
+            <label>
+              <span>Inseam</span>
+              <div class="unit-input"><input id="inseam" inputmode="decimal" type="number" min="0" step="0.1" placeholder="78"><b class="unit-label">cm</b></div>
+            </label>
+            <label>
+              <span>Sleeve length</span>
+              <div class="unit-input"><input id="sleeve" inputmode="decimal" type="number" min="0" step="0.1" placeholder="60"><b class="unit-label">cm</b></div>
+            </label>
+            <label>
+              <span>Garment length</span>
+              <div class="unit-input"><input id="garmentLength" inputmode="decimal" type="number" min="0" step="0.1" placeholder="145"><b class="unit-label">cm</b></div>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel step-panel">
+          <div class="step-heading">
+            <span class="step-number">3</span>
+            <div>
+              <h2>Describe the design</h2>
+              <p>Start with your idea, then use the controls to make it precise.</p>
+            </div>
+          </div>
+
+          <label class="field-label" for="idea">What do you have in mind?</label>
+          <textarea id="idea" rows="5" placeholder="Example: A floor-length emerald gown for an evening wedding, fitted at the waist, with long sleeves, soft draping and subtle gold embroidery."></textarea>
+
+          <div class="design-grid">
+            <label>
+              <span>Event</span>
+              <select id="event">
+                <option>Wedding</option>
+                <option>Traditional ceremony</option>
+                <option>Gala</option>
+                <option>Corporate event</option>
+                <option>Birthday or party</option>
+                <option>Casual occasion</option>
+                <option>Other event</option>
+              </select>
+            </label>
+            <label>
+              <span>Garment</span>
+              <select id="garment">
+                <option>Gown</option>
+                <option>Suit</option>
+                <option>Jumpsuit</option>
+                <option>Kaftan</option>
+              </select>
+            </label>
+            <label>
+              <span>Fit</span>
+              <select id="fit">
+                <option>Balanced</option>
+                <option>Fitted</option>
+                <option>Relaxed</option>
+                <option>Flowing</option>
+                <option>Structured</option>
+                <option>Oversized</option>
+              </select>
+            </label>
+            <label>
+              <span>Fabric</span>
+              <select id="fabric">
+                <option>Silk</option>
+                <option>Satin</option>
+                <option>Lace</option>
+                <option>Crepe</option>
+                <option>Linen</option>
+                <option>Velvet</option>
+                <option>Cotton blend</option>
+              </select>
+            </label>
+            <label class="colour-field">
+              <span>Primary colour</span>
+              <div class="colour-control">
+                <input id="colour" type="color" value="#17634e" aria-label="Choose primary colour">
+                <input id="colourText" type="text" value="#17634e" maxlength="7" aria-label="Primary colour hex value">
+              </div>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel step-panel">
+          <div class="step-heading">
+            <span class="step-number">4</span>
+            <div>
+              <h2>Add inspiration</h2>
+              <p>Optional: upload a garment, sketch, fabric or mood-board image.</p>
+            </div>
+          </div>
+
+          <div id="inspirationDropzone" class="dropzone dropzone-secondary">
+            <input id="inspirationUpload" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp">
+            <button id="inspirationChooseButton" class="button button-secondary" type="button">Choose inspiration</button>
+            <span>or drag and drop an image</span>
+            <strong id="inspirationFileName" class="file-name"></strong>
+          </div>
+        </section>
+
+        <div class="action-row">
+          <button id="generateButton" class="button button-primary button-large" type="button">Dress the model</button>
+          <button id="resetButton" class="button button-ghost" type="button">Reset</button>
+        </div>
+        <p id="formMessage" class="form-message" role="alert" aria-live="polite"></p>
+      </section>
+
+      <aside class="preview-column" aria-label="Outfit preview">
+        <section class="panel preview-panel">
+          <div class="preview-heading">
+            <div>
+              <p class="eyebrow">Visual preview</p>
+              <h2 id="previewTitle">Upload a model to begin</h2>
+            </div>
+            <span id="previewMode" class="status-badge">Waiting</span>
+          </div>
+
+          <div id="previewStage" class="preview-stage empty">
+            <div id="emptyPreview" class="empty-preview">
+              <div class="empty-icon" aria-hidden="true">✦</div>
+              <strong>Your styled model appears here</strong>
+              <span>Upload a photo and press “Dress the model”.</span>
+            </div>
+
+            <img id="beforeImage" alt="Original model photo">
+            <div id="afterLayer" class="after-layer">
+              <img id="afterImage" alt="Styled model concept preview">
+            </div>
+            <div id="splitHandle" class="split-handle" aria-hidden="true"><span></span></div>
+          </div>
+
+          <label id="compareControl" class="compare-control hidden" for="compareRange">
+            <span>Before</span>
+            <input id="compareRange" type="range" min="0" max="100" value="55">
+            <span>After</span>
+          </label>
+
+          <div class="preview-actions">
+            <button id="downloadImageButton" class="button button-secondary" type="button" disabled>Download preview</button>
+            <button id="downloadBriefButton" class="button button-ghost" type="button" disabled>Download brief</button>
+          </div>
+        </section>
+
+        <section id="inspirationPreviewPanel" class="panel compact-panel hidden">
+          <div class="mini-heading">
+            <h2>Inspiration reference</h2>
+            <button id="removeInspirationButton" class="text-button" type="button">Remove</button>
+          </div>
+          <img id="inspirationPreview" class="inspiration-preview" alt="Uploaded outfit inspiration">
+        </section>
+
+        <section class="panel compact-panel">
+          <div class="mini-heading">
+            <h2>Generation brief</h2>
+            <span id="measurementCount" class="status-badge">0 measurements</span>
+          </div>
+          <p id="briefSummary" class="brief-summary">Your structured styling instructions will appear after generation.</p>
+          <ol id="briefInstructions" class="brief-list"></ol>
+        </section>
+
+        <section class="privacy-note">
+          <strong>Photo privacy</strong>
+          <p>In demo mode, images stay in your browser. When an external provider is configured, the server forwards the selected images and brief to that provider.</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <canvas id="renderCanvas" class="visually-hidden"></canvas>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
