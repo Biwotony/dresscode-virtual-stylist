@@ -1,0 +1,17 @@
+{
+  "name": "dresscode-virtual-stylist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A virtual event-outfit design studio with photo uploads, measurements, inspiration references and a provider-ready try-on API.",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test",
+    "check": "node --check server.mjs && node --check public/js/app.js && node --check public/js/api.js && node --check public/js/brief.js && node --check public/js/canvas.js && node --check public/js/measurements.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
