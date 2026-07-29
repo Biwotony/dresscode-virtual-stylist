@@ -1,14 +1,14 @@
 {
   "name": "dresscode-virtual-stylist",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "A staged AI virtual try-on studio with Paystack, M-PESA and prepaid credit support.",
+  "description": "A tailor consultation, approval and realistic virtual try-on platform with Paystack credits.",
   "type": "module",
   "scripts": {
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
     "test": "node --test",
-    "check": "node --check server.mjs && node --check lib/image-utils.mjs && node --check lib/openai-tryon.mjs && node --check lib/job-store.mjs && node --check lib/tryon-pipeline.mjs && node --check lib/payment-store.mjs && node --check lib/paystack-payments.mjs && node --check public/js/app.js && node --check public/js/api.js && node --check public/js/payments-ui.js && node --check public/config.js && node --check public/js/brief.js && node --check public/js/canvas.js && node --check public/js/measurements.js"
+    "check": "node --check server.mjs && node --check lib/image-utils.mjs && node --check lib/openai-tryon.mjs && node --check lib/job-store.mjs && node --check lib/tryon-pipeline.mjs && node --check lib/payment-store.mjs && node --check lib/paystack-payments.mjs && node --check lib/consultation-store.mjs && node --check public/js/app.js && node --check public/js/api.js && node --check public/js/payments-ui.js && node --check public/js/consultations-ui.js && node --check public/js/approval.js && node --check public/config.js && node --check public/js/brief.js && node --check public/js/measurements.js"
   },
   "dependencies": {
     "sharp": "^0.34.5"
