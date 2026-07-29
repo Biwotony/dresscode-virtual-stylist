@@ -6,5 +6,6 @@ window.DRESSCODE_CONFIG = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+  if (document.body?.dataset.page === 'approval') return;
   import('./js/payments-ui.js').catch(error => console.error('Unable to load payments UI:', error));
 });
