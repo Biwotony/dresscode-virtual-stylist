@@ -20,10 +20,10 @@
       <div>
         <p class="eyebrow">Identity-preserving virtual fitting</p>
         <h1>Realistic Virtual Try-On</h1>
-        <p>Dresscode extracts the inspiration garment, lets you review it, then creates body-aware try-on variations while preserving the original person, pose and scene.</p>
+        <p>Upload your photo, describe the outfit or add an inspiration image, then generate a realistic try-on.</p>
       </div>
       <ol class="pipeline-summary">
-        <li>Review detected garment</li><li>Review clean garment reference</li><li>Review real try-on variations</li>
+        <li>Upload model photo</li><li>Add outfit direction</li><li>Generate and review the result</li>
       </ol>
     </section>
 
@@ -62,12 +62,12 @@
             <label><span>Fit</span><select id="fit"><option>Balanced</option><option>Fitted</option><option>Relaxed</option><option>Flowing</option><option>Structured</option><option>Oversized</option></select></label>
             <label><span>Fabric</span><select id="fabric"><option>Silk</option><option>Satin</option><option>Lace</option><option>Crepe</option><option>Linen</option><option>Velvet</option><option>Cotton blend</option></select></label>
             <label><span>Primary colour</span><div class="colour-control"><input id="colour" type="color" value="#17634e"><input id="colourText" type="text" value="#17634e" maxlength="7"></div></label>
-            <label><span>Variations</span><select id="variations"><option value="1">1 look</option><option value="2">2 looks</option><option value="3" selected>3 looks</option></select></label>
+            <label><span>Results</span><select id="variations"><option value="1" selected>1 look</option><option value="2">2 looks</option><option value="3">3 looks</option></select></label>
           </div>
         </section>
 
         <section class="panel step-panel">
-          <div class="step-heading"><span class="step-number">4</span><div><h2>Inspiration image</h2><p>Recommended for garment fidelity. A photo, sketch or outfit reference works.</p></div></div>
+          <div class="step-heading"><span class="step-number">4</span><div><h2>Inspiration image</h2><p>Optional. Add a photo, sketch or outfit reference for better garment fidelity.</p></div></div>
           <div id="inspirationDropzone" class="dropzone dropzone-secondary">
             <input id="inspirationUpload" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp">
             <button id="inspirationChooseButton" class="button button-secondary" type="button">Choose inspiration</button>
@@ -75,7 +75,8 @@
           </div>
         </section>
 
-        <div class="action-row"><button id="generateButton" class="button button-primary button-large" type="button">Start real try-on</button><button id="conceptButton" class="button button-secondary" type="button">Rough preview only</button><button id="resetButton" class="button button-ghost" type="button">Reset</button></div>
+        <div class="action-row"><button id="generateButton" class="button button-primary button-large" type="button">Generate real try-on</button><button id="resetButton" class="button button-ghost" type="button">Reset</button></div>
+        <p class="generation-note">High-quality generation can take one to three minutes. The progress panel will show each stage and any provider error.</p>
         <p id="formMessage" class="form-message" role="alert" aria-live="polite"></p>
 
         <details class="panel developer-settings">
@@ -88,10 +89,10 @@
       <aside class="preview-column">
         <section class="panel preview-panel">
           <div class="preview-heading"><div><p class="eyebrow">Current result</p><h2 id="previewTitle">Upload a model to begin</h2></div><span id="previewMode" class="status-badge">Waiting</span></div>
-          <div id="previewStage" class="preview-stage empty"><div id="emptyPreview" class="empty-preview"><strong>Your model and results appear here</strong><span>Real try-on runs in reviewable stages.</span></div><img id="beforeImage" alt="Original model photo"><div id="afterLayer" class="after-layer hidden"><img id="afterImage" alt="Generated try-on"></div><div id="splitHandle" class="split-handle hidden"><span></span></div></div>
+          <div id="previewStage" class="preview-stage empty"><div id="emptyPreview" class="empty-preview"><strong>Your model and results appear here</strong><span>Use Generate real try-on to start.</span></div><img id="beforeImage" alt="Original model photo"><div id="afterLayer" class="after-layer hidden"><img id="afterImage" alt="Generated try-on"></div><div id="splitHandle" class="split-handle hidden"><span></span></div></div>
           <label id="compareControl" class="compare-control hidden"><span>Before</span><input id="compareRange" type="range" min="0" max="100" value="55"><span>After</span></label>
           <div id="variationList" class="variation-list"></div>
-          <div class="preview-actions"><button id="downloadImageButton" class="button button-secondary" disabled type="button">Download image</button><button id="downloadBriefButton" class="button button-ghost" disabled type="button">Download brief</button></div>
+          <div class="preview-actions"><button id="downloadImageButton" class="button button-secondary" disabled type="button">Download image</button></div>
         </section>
 
         <section id="jobPanel" class="panel hidden">
@@ -101,13 +102,11 @@
         </section>
 
         <section id="inspirationPreviewPanel" class="panel hidden"><div class="mini-heading"><h2>Inspiration</h2><button id="removeInspirationButton" class="text-button" type="button">Remove</button></div><img id="inspirationPreview" class="inspiration-preview" alt="Inspiration image"></section>
-        <section class="panel"><div class="mini-heading"><h2>Styling brief</h2><span id="measurementCount" class="status-badge">0 measurements</span></div><p id="briefSummary">The brief appears when generation starts.</p><ol id="briefInstructions" class="brief-list"></ol></section>
         <section class="privacy-note"><strong>Private runtime data</strong><p>Uploaded photos and generated assets are written to the server runtime directory, which is excluded from Git. Configure deletion and retention rules before production use.</p></section>
       </aside>
     </div>
   </main>
 
-  <canvas id="renderCanvas" class="visually-hidden"></canvas>
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
