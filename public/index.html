@@ -6,8 +6,8 @@
   <meta name="description" content="Dresscode helps tailors save client consultations, create realistic outfit previews and collect design approval.">
   <meta name="theme-color" content="#0d1117">
   <title>Dresscode | Tailor Consultation & Virtual Try-On</title>
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./consultations.css">
+  <link rel="stylesheet" href="./styles.css?v=20260729-2">
+  <link rel="stylesheet" href="./consultations.css?v=20260729-2">
   <script src="./config.js"></script>
 </head>
 <body data-page="studio">
@@ -90,7 +90,7 @@
       </section>
 
       <aside class="preview-column">
-        <section class="panel preview-panel">
+        <section class="panel preview-panel" style="position:static!important;top:auto!important">
           <div class="preview-heading"><div><p class="eyebrow">Current result</p><h2 id="previewTitle">Upload a model to begin</h2></div><span id="previewMode" class="status-badge">Waiting</span></div>
           <div id="previewStage" class="preview-stage empty"><div id="emptyPreview" class="empty-preview"><strong>Your client and results appear here</strong><span>Load a saved client or upload a model photo.</span></div><img id="beforeImage" alt="Original model photo"><div id="afterLayer" class="after-layer hidden"><img id="afterImage" alt="Generated try-on"></div><div id="splitHandle" class="split-handle hidden"><span></span></div></div>
           <label id="compareControl" class="compare-control hidden"><span>Before</span><input id="compareRange" type="range" min="0" max="100" value="55"><span>After</span></label>
