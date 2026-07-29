@@ -7,6 +7,28 @@ import { JobStore, publicJob } from './lib/job-store.mjs';
 import { TryOnPipeline } from './lib/tryon-pipeline.mjs';
 
 const rootDir = resolve(fileURLToPath(new URL('.', import.meta.url)));
+
+async function loadLocalEnv(filePath) {
+  try {
+    const source = await readFile(filePath, 'utf8');
+    for (const rawLine of source.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+      const separator = line.indexOf('=');
+      if (separator < 1) continue;
+      const key = line.slice(0, separator).trim();
+      let value = line.slice(separator + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      if (!(key in process.env)) process.env[key] = value;
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+
+await loadLocalEnv(join(rootDir, '.env'));
 const publicDir = join(rootDir, 'public');
 const runtimeDir = resolve(rootDir, process.env.DRESSCODE_DATA_DIR || '.dresscode');
 const port = Number.parseInt(process.env.PORT || '4173', 10);

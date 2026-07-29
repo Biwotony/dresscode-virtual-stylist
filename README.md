@@ -53,7 +53,7 @@ npm install
 cp .env.example .env
 ```
 
-Add your API key to `.env`, export the values into your shell or hosting platform, then run:
+Add your API key to `.env`, then run. The Node server loads the local `.env` file automatically; hosting platforms should use their secret environment settings:
 
 ```bash
 npm start
