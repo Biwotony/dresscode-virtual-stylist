@@ -21,7 +21,9 @@ const state = {
   job: null,
   pollTimer: null,
   reviewStage: null,
-  selectedVariation: 0
+  selectedVariation: 0,
+  clientId: null,
+  consultationId: null
 };
 
 const $ = id => document.getElementById(id);
@@ -126,21 +128,40 @@ async function handleFile(file, onFile, input) {
   }
 }
 
+function setModelDataUrl(dataUrl, label = 'Saved client photo') {
+  state.modelImage = dataUrl || null;
+  elements.modelFileName.textContent = dataUrl ? label : '';
+  if (dataUrl) {
+    elements.beforeImage.src = dataUrl;
+    elements.previewStage.classList.remove('empty');
+    elements.emptyPreview.classList.add('hidden');
+    elements.previewTitle.textContent = 'Model ready';
+    elements.previewMode.textContent = 'Original photo';
+  } else {
+    elements.beforeImage.removeAttribute('src');
+  }
+  emitState();
+}
+
 async function setModel(file) {
-  state.modelImage = await readFile(file);
-  elements.modelFileName.textContent = file.name;
-  elements.beforeImage.src = state.modelImage;
-  elements.previewStage.classList.remove('empty');
-  elements.emptyPreview.classList.add('hidden');
-  elements.previewTitle.textContent = 'Model ready';
-  elements.previewMode.textContent = 'Original photo';
+  setModelDataUrl(await readFile(file), file.name);
+}
+
+function setInspirationDataUrl(dataUrl, label = 'Saved inspiration') {
+  state.inspirationImage = dataUrl || null;
+  elements.inspirationFileName.textContent = dataUrl ? label : '';
+  if (dataUrl) {
+    elements.inspirationPreview.src = dataUrl;
+    elements.inspirationPreviewPanel.classList.remove('hidden');
+  } else {
+    elements.inspirationPreview.removeAttribute('src');
+    elements.inspirationPreviewPanel.classList.add('hidden');
+  }
+  emitState();
 }
 
 async function setInspiration(file) {
-  state.inspirationImage = await readFile(file);
-  elements.inspirationFileName.textContent = file.name;
-  elements.inspirationPreview.src = state.inspirationImage;
-  elements.inspirationPreviewPanel.classList.remove('hidden');
+  setInspirationDataUrl(await readFile(file), file.name);
 }
 
 function clearInspiration() {
@@ -149,6 +170,14 @@ function clearInspiration() {
   elements.inspirationFileName.textContent = '';
   elements.inspirationPreview.removeAttribute('src');
   elements.inspirationPreviewPanel.classList.add('hidden');
+  emitState();
+}
+
+function updateUnitDisplay(next) {
+  state.unit = next;
+  elements.unitCm.setAttribute('aria-pressed', String(next === 'cm'));
+  elements.unitIn.setAttribute('aria-pressed', String(next === 'in'));
+  document.querySelectorAll('.unit-label').forEach(label => { label.textContent = next; });
 }
 
 function switchUnit(next) {
@@ -157,10 +186,22 @@ function switchUnit(next) {
     const input = $(field.id);
     if (input.value) input.value = convertMeasurement(input.value, state.unit, next);
   }
-  state.unit = next;
-  elements.unitCm.setAttribute('aria-pressed', String(next === 'cm'));
-  elements.unitIn.setAttribute('aria-pressed', String(next === 'in'));
-  document.querySelectorAll('.unit-label').forEach(label => { label.textContent = next; });
+  updateUnitDisplay(next);
+  emitState();
+}
+
+function populateMeasurements(measurements = {}, unit = 'cm') {
+  measurementFields.forEach(field => { $(field.id).value = ''; });
+  updateUnitDisplay(unit === 'in' ? 'in' : 'cm');
+  for (const field of measurementFields) {
+    const item = measurements[field.id];
+    if (!item?.value) continue;
+    const value = item.unit && item.unit !== state.unit
+      ? convertMeasurement(item.value, item.unit, state.unit)
+      : item.value;
+    $(field.id).value = value;
+  }
+  emitState();
 }
 
 function normaliseHex(value) {
@@ -179,6 +220,51 @@ function collectBrief() {
     inspirationAdded: Boolean(state.inspirationImage),
     variationCount: Number(elements.variations.value)
   });
+}
+
+function selectValue(element, value) {
+  if (!value) return;
+  const option = [...element.options].find(item => item.value === value || item.textContent === value);
+  if (option) element.value = option.value;
+}
+
+function populateBrief(brief) {
+  if (!brief) return;
+  elements.idea.value = brief.idea || '';
+  selectValue(elements.event, brief.event);
+  selectValue(elements.garment, brief.garment);
+  selectValue(elements.fit, brief.fit);
+  selectValue(elements.fabric, brief.fabric);
+  selectValue(elements.variations, String(brief.variationCount || 1));
+  const colour = normaliseHex(brief.colour || '');
+  if (colour) {
+    elements.colour.value = colour;
+    elements.colourText.value = colour;
+  }
+  state.brief = collectBrief();
+  emitState();
+}
+
+function selectedAsset() {
+  return state.job?.stages?.tryon?.assets?.[state.selectedVariation] || null;
+}
+
+function emitState() {
+  window.dispatchEvent(new CustomEvent('dresscode:app-state', {
+    detail: {
+      clientId: state.clientId,
+      consultationId: state.consultationId,
+      unit: state.unit,
+      measurements: readMeasurements(document, state.unit),
+      modelImage: state.modelImage,
+      inspirationImage: state.inspirationImage,
+      brief: collectBrief(),
+      job: state.job,
+      selectedVariation: state.selectedVariation,
+      selectedAsset: selectedAsset(),
+      generatedImage: state.generatedImage
+    }
+  }));
 }
 
 function showImage(source, label = 'Real try-on') {
@@ -226,6 +312,7 @@ async function refreshHealth() {
     elements.providerBadge.className = 'status-badge error';
   }
   setBusy(false);
+  emitState();
 }
 
 function renderStartingState() {
@@ -270,7 +357,7 @@ async function startTryOn() {
   if (!colour) return showMessage('Use a valid six-digit colour such as #17634e.');
 
   elements.colour.value = colour;
-  state.brief = collectBrief();
+  state.brief = { ...collectBrief(), consultationId: state.consultationId };
   state.selectedVariation = 0;
   setBusy(true);
   renderStartingState();
@@ -281,7 +368,8 @@ async function startTryOn() {
       modelImage: state.modelImage,
       inspirationImage: state.inspirationImage,
       brief: state.brief,
-      variationCount: state.brief.variationCount
+      variationCount: state.brief.variationCount,
+      consultationId: state.consultationId
     });
     renderJob(state.job);
     schedulePoll();
@@ -325,6 +413,7 @@ function renderVariations(assets) {
       renderVariations(assets);
       showImage(url, 'Real try-on');
       elements.reviewImage.src = url;
+      emitState();
     });
     elements.variationList.appendChild(button);
   });
@@ -396,6 +485,7 @@ function renderJob(job) {
     elements.jobPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   if (job.status === 'rejected') showMessage('This try-on job was rejected.', false);
+  emitState();
 }
 
 function schedulePoll() {
@@ -415,14 +505,17 @@ function schedulePoll() {
   }, 1800);
 }
 
-async function stageAction(action) {
-  if (!state.job || !state.reviewStage) return;
-  const prompt = elements.correctionPrompt.value.trim();
+async function stageAction(action, promptOverride = '') {
+  if (!state.job) return;
+  const stageName = promptOverride ? 'tryon' : state.reviewStage;
+  if (!stageName) return showMessage('Generate a try-on result before applying changes.');
+  const prompt = String(promptOverride || elements.correctionPrompt.value).trim();
   if (action === 'regenerate' && !prompt) return showMessage('Describe the correction before regenerating.');
   try {
     const payload = { prompt };
-    if (state.reviewStage === 'tryon') payload.variationIndex = state.selectedVariation;
-    state.job = await actOnTryOnStage(state.job.id, state.reviewStage, action, payload);
+    if (stageName === 'tryon') payload.variationIndex = state.selectedVariation;
+    state.job = await actOnTryOnStage(state.job.id, stageName, action, payload);
+    state.reviewStage = stageName;
     renderJob(state.job);
     schedulePoll();
     clearMessage();
@@ -438,6 +531,28 @@ function download(url, name) {
   document.body.appendChild(link);
   link.click();
   link.remove();
+}
+
+async function clearConsultationCanvas() {
+  clearTimeout(state.pollTimer);
+  if (state.job?.id) deleteTryOnJob(state.job.id).catch(() => {});
+  state.job = null;
+  state.generatedImage = null;
+  state.brief = null;
+  clearInspiration();
+  elements.idea.value = '';
+  elements.afterImage.removeAttribute('src');
+  elements.afterLayer.classList.add('hidden');
+  elements.splitHandle.classList.add('hidden');
+  elements.compareControl.classList.add('hidden');
+  elements.variationList.replaceChildren();
+  elements.jobPanel.classList.add('hidden');
+  elements.reviewArea.classList.add('hidden');
+  elements.previewTitle.textContent = state.modelImage ? 'Model ready' : 'Upload a model to begin';
+  elements.previewMode.textContent = state.modelImage ? 'Original photo' : 'Waiting';
+  elements.downloadImageButton.disabled = true;
+  clearMessage();
+  emitState();
 }
 
 async function reset() {
@@ -466,18 +581,64 @@ async function reset() {
   elements.downloadImageButton.disabled = true;
   measurementFields.forEach(field => { $(field.id).value = ''; });
   clearMessage();
+  emitState();
 }
+
+window.addEventListener('dresscode:load-client', event => {
+  const client = event.detail?.client;
+  if (!client) return;
+  state.clientId = client.id;
+  setModelDataUrl(client.modelImage, `${client.name} · saved photo`);
+  populateMeasurements(client.measurements, client.unit);
+  showMessage(`Loaded ${client.name}.`, false);
+  emitState();
+});
+
+window.addEventListener('dresscode:load-consultation', event => {
+  const consultation = event.detail?.consultation;
+  const client = event.detail?.client;
+  if (!consultation) return;
+  state.consultationId = consultation.id;
+  state.clientId = consultation.clientId;
+  if (client) {
+    setModelDataUrl(client.modelImage, `${client.name} · saved photo`);
+    populateMeasurements(client.measurements, client.unit);
+  }
+  setInspirationDataUrl(consultation.inspirationImage, `${consultation.title} · inspiration`);
+  populateBrief(consultation.brief);
+  showMessage(`Loaded consultation: ${consultation.title}.`, false);
+  emitState();
+});
+
+window.addEventListener('dresscode:set-active-consultation', event => {
+  const detail = event.detail || {};
+  if ('consultationId' in detail) state.consultationId = detail.consultationId || null;
+  if ('clientId' in detail) state.clientId = detail.clientId || null;
+  emitState();
+});
+
+window.addEventListener('dresscode:apply-change', event => {
+  const prompt = String(event.detail?.prompt || '').trim();
+  if (prompt) stageAction('regenerate', prompt);
+});
+
+window.addEventListener('dresscode:request-state', emitState);
+window.addEventListener('dresscode:new-consultation', clearConsultationCanvas);
 
 setupPicker(elements.modelInput, elements.modelChooseButton, elements.modelDropzone, setModel);
 setupPicker(elements.inspirationInput, elements.inspirationChooseButton, elements.inspirationDropzone, setInspiration);
 elements.removeInspirationButton.addEventListener('click', clearInspiration);
 elements.unitCm.addEventListener('click', () => switchUnit('cm'));
 elements.unitIn.addEventListener('click', () => switchUnit('in'));
-elements.colour.addEventListener('input', () => { elements.colourText.value = elements.colour.value; });
+elements.colour.addEventListener('input', () => {
+  elements.colourText.value = elements.colour.value;
+  emitState();
+});
 elements.colourText.addEventListener('change', () => {
   const value = normaliseHex(elements.colourText.value);
   if (value) elements.colour.value = value;
   else showMessage('Use a valid colour value such as #17634e.');
+  emitState();
 });
 elements.generateButton.addEventListener('click', startTryOn);
 elements.resetButton.addEventListener('click', reset);
@@ -493,5 +654,10 @@ elements.saveBackendButton.addEventListener('click', async () => {
   await refreshHealth();
   showMessage('Backend connection saved.', false);
 });
+
+for (const field of measurementFields) $(field.id).addEventListener('input', emitState);
+[elements.idea, elements.event, elements.garment, elements.fit, elements.fabric, elements.variations]
+  .forEach(element => element.addEventListener('change', emitState));
+elements.idea.addEventListener('input', emitState);
 
 refreshHealth();
