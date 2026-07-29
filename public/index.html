@@ -3,32 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Dresscode is an identity-preserving AI virtual try-on studio.">
+  <meta name="description" content="Dresscode helps tailors save client consultations, create realistic outfit previews and collect design approval.">
   <meta name="theme-color" content="#0d1117">
-  <title>Dresscode | Realistic Virtual Try-On</title>
+  <title>Dresscode | Tailor Consultation & Virtual Try-On</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./consultations.css">
   <script src="./config.js"></script>
 </head>
-<body>
+<body data-page="studio">
   <header class="site-header">
-    <a class="brand" href="#top"><span class="brand-mark">D</span><span><strong>Dresscode</strong><small>Real AI try-on</small></span></a>
+    <a class="brand" href="#top"><span class="brand-mark">D</span><span><strong>Dresscode</strong><small>Tailor consultation studio</small></span></a>
     <span id="providerBadge" class="status-badge">Checking backend…</span>
   </header>
 
   <main id="top" class="app-shell">
     <section class="hero panel">
       <div>
-        <p class="eyebrow">Identity-preserving virtual fitting</p>
-        <h1>Realistic Virtual Try-On</h1>
-        <p>Upload your photo, describe the outfit or add an inspiration image, then generate a realistic try-on.</p>
+        <p class="eyebrow">Client approval before sewing</p>
+        <h1>Tailor Consultation & Realistic Try-On</h1>
+        <p>Create a client record, save their photo and measurements, generate outfit versions, collect approval and record the tailoring order.</p>
       </div>
       <ol class="pipeline-summary">
-        <li>Upload model photo</li><li>Add outfit direction</li><li>Generate and review the result</li>
+        <li>Create the client consultation</li><li>Generate and refine the outfit</li><li>Share approval and record the order</li>
       </ol>
     </section>
 
     <div class="workspace">
       <section class="control-column">
+        <div id="consultationSetupMount"></div>
+
         <section class="panel step-panel">
           <div class="step-heading"><span class="step-number">1</span><div><h2>Model photo</h2><p>Use a clear full-body or near full-body photo with visible arms and hands.</p></div></div>
           <div id="modelDropzone" class="dropzone">
@@ -39,7 +42,7 @@
         </section>
 
         <section class="panel step-panel">
-          <div class="step-heading split-heading"><div class="heading-with-number"><span class="step-number">2</span><div><h2>Measurements</h2><p>Optional proportion guidance—not a tailoring guarantee.</p></div></div><div class="segmented-control"><button id="unitCm" aria-pressed="true" type="button">cm</button><button id="unitIn" aria-pressed="false" type="button">in</button></div></div>
+          <div class="step-heading split-heading"><div class="heading-with-number"><span class="step-number">2</span><div><h2>Measurements</h2><p>Saved as proportion guidance for the consultation—not a tailoring fit guarantee.</p></div></div><div class="segmented-control"><button id="unitCm" aria-pressed="true" type="button">cm</button><button id="unitIn" aria-pressed="false" type="button">in</button></div></div>
           <div class="measurement-grid">
             <label><span>Height</span><div class="unit-input"><input id="height" type="number" min="0" step="0.1"><b class="unit-label">cm</b></div></label>
             <label><span>Chest / bust</span><div class="unit-input"><input id="chest" type="number" min="0" step="0.1"><b class="unit-label">cm</b></div></label>
@@ -67,7 +70,7 @@
         </section>
 
         <section class="panel step-panel">
-          <div class="step-heading"><span class="step-number">4</span><div><h2>Inspiration image</h2><p>Optional. Add a photo, sketch or outfit reference for better garment fidelity.</p></div></div>
+          <div class="step-heading"><span class="step-number">4</span><div><h2>Inspiration image</h2><p>Optional. Add a photo, sketch or outfit reference and save it with the consultation.</p></div></div>
           <div id="inspirationDropzone" class="dropzone dropzone-secondary">
             <input id="inspirationUpload" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp">
             <button id="inspirationChooseButton" class="button button-secondary" type="button">Choose inspiration</button>
@@ -75,13 +78,13 @@
           </div>
         </section>
 
-        <div class="action-row"><button id="generateButton" class="button button-primary button-large" type="button">Generate real try-on</button><button id="resetButton" class="button button-ghost" type="button">Reset</button></div>
-        <p class="generation-note">High-quality generation can take one to three minutes. The progress panel will show each stage and any provider error.</p>
+        <div class="action-row"><button id="generateButton" class="button button-primary button-large" type="button">Generate real try-on</button><button id="resetButton" class="button button-ghost" type="button">Reset canvas</button></div>
+        <p class="generation-note">High-quality generation can take one to three minutes. Save an acceptable result as a design version in the consultation panel.</p>
         <p id="formMessage" class="form-message" role="alert" aria-live="polite"></p>
 
         <details class="panel developer-settings">
           <summary>Backend connection</summary>
-          <p>Leave blank when running the Node app. A GitHub Pages frontend needs the URL of a separately deployed backend.</p>
+          <p>Leave blank when running the Node app. A GitHub Pages frontend needs the URL of the separately deployed backend.</p>
           <div class="backend-row"><input id="backendUrl" type="url" placeholder="https://your-backend.example.com"><button id="saveBackendButton" class="button button-secondary" type="button">Save</button></div>
         </details>
       </section>
@@ -89,7 +92,7 @@
       <aside class="preview-column">
         <section class="panel preview-panel">
           <div class="preview-heading"><div><p class="eyebrow">Current result</p><h2 id="previewTitle">Upload a model to begin</h2></div><span id="previewMode" class="status-badge">Waiting</span></div>
-          <div id="previewStage" class="preview-stage empty"><div id="emptyPreview" class="empty-preview"><strong>Your model and results appear here</strong><span>Use Generate real try-on to start.</span></div><img id="beforeImage" alt="Original model photo"><div id="afterLayer" class="after-layer hidden"><img id="afterImage" alt="Generated try-on"></div><div id="splitHandle" class="split-handle hidden"><span></span></div></div>
+          <div id="previewStage" class="preview-stage empty"><div id="emptyPreview" class="empty-preview"><strong>Your client and results appear here</strong><span>Load a saved client or upload a model photo.</span></div><img id="beforeImage" alt="Original model photo"><div id="afterLayer" class="after-layer hidden"><img id="afterImage" alt="Generated try-on"></div><div id="splitHandle" class="split-handle hidden"><span></span></div></div>
           <label id="compareControl" class="compare-control hidden"><span>Before</span><input id="compareRange" type="range" min="0" max="100" value="55"><span>After</span></label>
           <div id="variationList" class="variation-list"></div>
           <div class="preview-actions"><button id="downloadImageButton" class="button button-secondary" disabled type="button">Download image</button></div>
@@ -101,12 +104,15 @@
           <div id="reviewArea" class="review-area hidden"><img id="reviewImage" alt="Stage review"><div><h3 id="reviewTitle"></h3><p id="reviewCopy"></p><textarea id="correctionPrompt" rows="3" placeholder="Describe exactly what should be corrected."></textarea><div class="review-actions"><button id="approveButton" class="button button-primary" type="button">Approve</button><button id="regenerateButton" class="button button-secondary" type="button">Regenerate</button><button id="rejectButton" class="button button-ghost" type="button">Reject</button></div></div></div>
         </section>
 
+        <div id="consultationToolsMount"></div>
+
         <section id="inspirationPreviewPanel" class="panel hidden"><div class="mini-heading"><h2>Inspiration</h2><button id="removeInspirationButton" class="text-button" type="button">Remove</button></div><img id="inspirationPreview" class="inspiration-preview" alt="Inspiration image"></section>
-        <section class="privacy-note"><strong>Private runtime data</strong><p>Uploaded photos and generated assets are written to the server runtime directory, which is excluded from Git. Configure deletion and retention rules before production use.</p></section>
+        <section class="privacy-note"><strong>Private consultation data</strong><p>Client photos, measurements, versions, approvals and order records are stored on the configured backend disk. Add account authentication and a retention policy before broad public use.</p></section>
       </aside>
     </div>
   </main>
 
   <script type="module" src="./js/app.js"></script>
+  <script type="module" src="./js/consultations-ui.js"></script>
 </body>
 </html>
