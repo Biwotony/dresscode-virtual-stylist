@@ -1,3 +1,4 @@
+# Deploy the Dresscode static demo from the public directory.
 name: Deploy static demo to GitHub Pages
 
 on:
