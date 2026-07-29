@@ -6,124 +6,67 @@ A Dresscode job moves through three reviewable stages.
 
 ### 1. Inspiration reference
 
-When an inspiration image is supplied, the server:
-
-1. analyses the image with a vision-capable Responses API model
-2. identifies the dominant intended garment or complete look
-3. returns structured metadata and a normalised bounding box
-4. crops the reference with local image processing
-5. pauses for user approval
-
-When no inspiration is supplied, this stage and the clean-garment stage are skipped.
+When an inspiration image is supplied, the server analyses the image, identifies the intended garment, crops the reference and pauses for user approval.
 
 ### 2. Clean garment reconstruction
 
-After crop approval, the server:
-
-1. sends the cropped reference to the image-edit endpoint
-2. asks for a complete empty garment on a distant chroma background
-3. removes the wearer and unrelated scene content
-4. removes the chroma background locally with `sharp`
-5. frames the transparent garment reference consistently
-6. pauses for approval or corrective regeneration
-
-This step gives the final try-on model a much cleaner and more exact clothing reference than a noisy inspiration photograph.
+After crop approval, the server reconstructs a complete empty garment, removes the chroma background locally with `sharp`, frames the transparent reference and pauses for approval.
 
 ### 3. Identity-preserving try-on
 
-After garment approval, the server sends:
+After garment approval, the server sends the original model photo, approved garment reference and styling brief to the image-editing model. It requests preservation of identity, face, hair, hands, body proportions, pose, camera angle, framing, lighting and background, while prohibiting an overlay appearance.
 
-1. the exact original model photo
-2. the approved clean garment image, when available
-3. the structured event, design, fabric, colour and measurement brief
-
-The prompt explicitly requests preservation of identity, face, hair, hands, body proportions, pose, camera angle, framing, lighting and background. It requests body-aware fabric drape, folds, seams, contact shadows and occlusion, and explicitly prohibits an overlay appearance.
-
-The server produces one to three variations. The user can approve one, reject the job, or regenerate a selected variation with a corrective prompt. Corrective regeneration includes the failed result as an additional reference.
+The server produces one to three variations. The user can approve one, reject the job, or regenerate a selected variation with a corrective prompt.
 
 ## Runtime storage
 
-Jobs are stored beneath `DRESSCODE_DATA_DIR` and never under a tracked repository path. Each job directory contains:
+Jobs are stored beneath `DRESSCODE_DATA_DIR` and never under a tracked repository path. The `DELETE /api/try-on/jobs/:id` endpoint removes a job directory.
 
-- the normalised model image
-- the inspiration image
-- reference crops
-- clean garment images
-- try-on variations
-- `job.json`
+## Try-on API
 
-The `DELETE /api/try-on/jobs/:id` endpoint removes the job directory.
+- `GET /api/health`
+- `POST /api/try-on/jobs`
+- `GET /api/try-on/jobs/:id`
+- `POST /api/try-on/jobs/:id/stages/:stage/:action`
+- `DELETE /api/try-on/jobs/:id`
 
-## API
+Stages are `reference`, `garment` and `tryon`. Actions are `approve`, `reject` and `regenerate`.
 
-### Configuration
+## Payment and credit architecture
 
-`GET /api/health`
+Dresscode uses a server-controlled prepaid credit model.
 
-Returns whether the OpenAI-backed try-on pipeline is ready.
+### Guest wallet
 
-### Create a job
+The backend creates an opaque wallet token in the form `wallet-id.secret`. Only a SHA-256 hash of the secret is stored on the server. The browser keeps the full token in local storage and sends it as a bearer token for wallet, payment and paid job-creation requests.
 
-`POST /api/try-on/jobs`
+### Checkout initialization
 
-```json
-{
-  "modelImage": "data:image/jpeg;base64,...",
-  "inspirationImage": "data:image/png;base64,...",
-  "variationCount": 3,
-  "brief": {
-    "event": "Wedding",
-    "garment": "Gown",
-    "fit": "Fitted",
-    "fabric": "Silk",
-    "colour": "#17634e",
-    "idea": "A floor-length emerald gown...",
-    "measurements": {}
-  }
-}
+The browser submits only an email address and package id. The backend looks up the package price and credit quantity from its own configuration, creates a payment intent and initializes Paystack hosted checkout. The client cannot choose the amount or credit quantity.
+
+### Fulfilment
+
+Credits can be fulfilled through either the signed `charge.success` webhook or the callback verification endpoint. Both paths validate status, reference, exact amount and currency. Wallet ledgers use stable references so repeated events cannot add credits twice.
+
+### Credit consumption
+
+When `PAYMENTS_REQUIRED=true`, the try-on job endpoint authenticates the wallet and consumes one credit before starting the pipeline. If synchronous job creation fails, an idempotent refund entry restores the credit. Review actions and corrective regenerations remain part of the same paid session.
+
+### Runtime records
+
+```text
+DRESSCODE_DATA_DIR/
+└── payments/
+    ├── wallets/
+    └── intents/
 ```
 
-### Read a job
-
-`GET /api/try-on/jobs/:id`
-
-### Review actions
-
-`POST /api/try-on/jobs/:id/stages/:stage/:action`
-
-Stages:
-
-- `reference`
-- `garment`
-- `tryon`
-
-Actions:
-
-- `approve`
-- `reject`
-- `regenerate`
-
-Regeneration body:
-
-```json
-{
-  "prompt": "Preserve the original sleeve construction and remove the invented belt.",
-  "variationIndex": 0
-}
-```
-
-`variationIndex` applies to try-on regeneration and approval.
-
-### Delete a job
-
-`DELETE /api/try-on/jobs/:id`
+This file-backed design is suitable for one backend instance. A scaled deployment should move wallets, intents and ledgers into a transactional database and attach them to authenticated users.
 
 ## Production hardening
 
-The current filesystem job store is suitable for an early single-instance product. For larger deployment:
-
-- place source and output images in private object storage
-- store job state in a database or durable queue
+- place images in private object storage
+- store jobs and wallet ledgers in a transactional database
 - use signed short-lived asset URLs
 - authenticate every job action
 - process jobs with background workers

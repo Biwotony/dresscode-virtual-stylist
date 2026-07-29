@@ -4,3 +4,7 @@ window.DRESSCODE_CONFIG = {
   // apiBaseUrl: 'https://dresscode-api.example.com'
   apiBaseUrl: ''
 };
+
+window.addEventListener('DOMContentLoaded', () => {
+  import('./js/payments-ui.js').catch(error => console.error('Unable to load payments UI:', error));
+});

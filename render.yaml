@@ -21,6 +21,18 @@ services:
         value: gpt-image-1
       - key: OPENAI_IMAGE_QUALITY
         value: high
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_CURRENCY
+        value: KES
+      - key: PAYSTACK_SUBUNIT
+        value: 100
+      - key: PAYSTACK_CHANNELS
+        value: mobile_money,card
+      - key: PAYSTACK_CALLBACK_URL
+        value: https://biwotony.github.io/dresscode-virtual-stylist/
+      - key: PAYMENTS_REQUIRED
+        value: true
       - key: DRESSCODE_DATA_DIR
         value: /var/data/dresscode
       - key: CORS_ORIGIN

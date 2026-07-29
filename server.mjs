@@ -1,9 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import { createReadStream, existsSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JobStore, publicJob } from './lib/job-store.mjs';
+import { PaymentStore } from './lib/payment-store.mjs';
+import { PaystackPayments } from './lib/paystack-payments.mjs';
 import { TryOnPipeline } from './lib/tryon-pipeline.mjs';
 
 const rootDir = resolve(fileURLToPath(new URL('.', import.meta.url)));
@@ -34,8 +37,10 @@ const runtimeDir = resolve(rootDir, process.env.DRESSCODE_DATA_DIR || '.dresscod
 const port = Number.parseInt(process.env.PORT || '4173', 10);
 const maxBodyBytes = 22 * 1024 * 1024;
 const store = new JobStore(join(runtimeDir, 'jobs'));
-await store.init();
+const paymentStore = new PaymentStore(join(runtimeDir, 'payments'));
+await Promise.all([store.init(), paymentStore.init()]);
 const pipeline = new TryOnPipeline({ store });
+const payments = new PaystackPayments({ store: paymentStore });
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -77,7 +82,7 @@ function sendJson(request, response, statusCode, payload) {
   response.end(JSON.stringify(payload));
 }
 
-async function readJsonBody(request) {
+async function readRawBody(request) {
   const chunks = [];
   let total = 0;
   for await (const chunk of request) {
@@ -87,9 +92,14 @@ async function readJsonBody(request) {
     }
     chunks.push(chunk);
   }
-  if (!chunks.length) return {};
+  return Buffer.concat(chunks);
+}
+
+async function readJsonBody(request) {
+  const raw = await readRawBody(request);
+  if (!raw.length) return {};
   try {
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    return JSON.parse(raw.toString('utf8'));
   } catch {
     throw Object.assign(new Error('Request body must be valid JSON.'), { statusCode: 400 });
   }
@@ -113,6 +123,75 @@ function validateCreateJob(payload) {
   return null;
 }
 
+async function handlePaymentApi(request, response, url) {
+  if (request.method === 'GET' && url.pathname === '/api/payments/config') {
+    sendJson(request, response, 200, payments.config);
+    return true;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/payments/wallets') {
+    const created = await paymentStore.createWallet();
+    sendJson(request, response, 201, created);
+    return true;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/payments/wallet') {
+    const wallet = await paymentStore.getWallet(payments.walletToken(request));
+    sendJson(request, response, 200, wallet);
+    return true;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/payments/initialize') {
+    const input = await readJsonBody(request);
+    const result = await payments.initialize({
+      token: payments.walletToken(request),
+      email: input.email,
+      planId: input.planId
+    });
+    sendJson(request, response, 200, result);
+    return true;
+  }
+
+  const verifyMatch = url.pathname.match(/^\/api\/payments\/verify\/([A-Za-z0-9.=-]+)$/);
+  if (request.method === 'GET' && verifyMatch) {
+    const result = await payments.verify({
+      token: payments.walletToken(request),
+      reference: verifyMatch[1]
+    });
+    sendJson(request, response, 200, result);
+    return true;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/payments/webhook') {
+    const rawBody = await readRawBody(request);
+    const result = await payments.handleWebhook(rawBody, request.headers['x-paystack-signature']);
+    sendJson(request, response, 200, result);
+    return true;
+  }
+
+  return false;
+}
+
+async function createPaidTryOn(request, payload) {
+  if (!payments.config.required) return pipeline.create(payload);
+  if (!payments.config.enabled) {
+    throw Object.assign(new Error('Payments are required but Paystack is not configured.'), { statusCode: 503 });
+  }
+
+  const token = payments.walletToken(request);
+  const usageReference = `tryon-${randomUUID()}`;
+  await paymentStore.consume(token, 1, usageReference, 'Realistic Virtual Try-On');
+  try {
+    const job = await pipeline.create(payload);
+    job.billing = { creditCharged: true, usageReference };
+    await store.save(job);
+    return job;
+  } catch (error) {
+    await paymentStore.refund(token, 1, usageReference, 'Try-on could not start');
+    throw error;
+  }
+}
+
 async function handleTryOnApi(request, response, url) {
   if (request.method === 'GET' && url.pathname === '/api/health') {
     const config = pipeline.config;
@@ -121,7 +200,12 @@ async function handleTryOnApi(request, response, url) {
       realTryOnReady: config.ready,
       provider: config.ready ? 'openai' : null,
       visionModel: config.visionModel,
-      imageModel: config.imageModel
+      imageModel: config.imageModel,
+      payments: {
+        enabled: payments.config.enabled,
+        required: payments.config.required,
+        currency: payments.config.currency
+      }
     });
     return true;
   }
@@ -133,7 +217,7 @@ async function handleTryOnApi(request, response, url) {
       sendJson(request, response, 400, { error: validationError });
       return true;
     }
-    const job = await pipeline.create(payload);
+    const job = await createPaidTryOn(request, payload);
     sendJson(request, response, 202, publicJob(job));
     return true;
   }
@@ -191,12 +275,13 @@ async function handleApi(request, response) {
   }
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
   try {
+    if (await handlePaymentApi(request, response, url)) return;
     if (await handleTryOnApi(request, response, url)) return;
     sendJson(request, response, 404, { error: 'API route not found.' });
   } catch (error) {
     const statusCode = Number.isInteger(error.statusCode) ? error.statusCode : 500;
     sendJson(request, response, statusCode, {
-      error: statusCode === 500 ? 'Unable to process the try-on request.' : error.message,
+      error: statusCode === 500 ? 'Unable to process the request.' : error.message,
       detail: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -249,4 +334,5 @@ const server = createServer(async (request, response) => {
 server.listen(port, () => {
   console.log(`Dresscode Real Try-On running on http://localhost:${port}`);
   console.log(pipeline.config.ready ? 'OpenAI real try-on enabled.' : 'OPENAI_API_KEY is missing; real try-on is disabled.');
+  console.log(payments.config.enabled ? `Paystack enabled (${payments.config.currency}).` : 'PAYSTACK_SECRET_KEY is missing; payments are disabled.');
 });
