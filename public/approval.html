@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Review and approve your Dresscode outfit design.">
+  <meta name="theme-color" content="#0d1117">
+  <title>Dresscode | Client Design Approval</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./consultations.css">
+  <script src="./config.js"></script>
+</head>
+<body data-page="approval">
+  <header class="site-header approval-header">
+    <div class="brand"><span class="brand-mark">D</span><span><strong id="approvalBusinessName">Dresscode Studio</strong><small id="approvalTagline">Client design approval</small></span></div>
+    <span id="approvalStatusBadge" class="status-badge">Loading</span>
+  </header>
+
+  <main class="approval-shell">
+    <section id="approvalLoading" class="panel approval-loading"><h1>Opening your design consultation…</h1><p>Please wait while Dresscode loads the saved versions.</p></section>
+
+    <section id="approvalContent" class="hidden">
+      <section class="panel approval-hero">
+        <div class="approval-brand-block">
+          <img id="approvalLogo" class="approval-logo hidden" alt="Studio logo">
+          <div><p class="eyebrow">Prepared for <span id="approvalClientName"></span></p><h1 id="approvalTitle"></h1><p id="approvalIntro"></p></div>
+        </div>
+        <div id="approvalContact" class="approval-contact"></div>
+      </section>
+
+      <section class="panel">
+        <div class="mini-heading"><div><p class="eyebrow">Design versions</p><h2>Choose the version you are approving</h2></div><span id="approvalVersionCount" class="status-badge"></span></div>
+        <div id="approvalVersions" class="approval-versions"></div>
+      </section>
+
+      <section class="panel approval-decision-panel">
+        <div><p class="eyebrow">Your decision</p><h2>Approve the design or request a change</h2><p class="muted-copy">Approval confirms the visual design direction. Final measurements, construction and physical fit remain with your tailor.</p></div>
+        <div class="consultation-grid">
+          <label><span>Your name</span><input id="decisionName" type="text" maxlength="120"></label>
+          <label class="full-row"><span>Comment</span><textarea id="decisionComment" rows="4" maxlength="1500" placeholder="Mention any change clearly, such as sleeve length, neckline, colour or hem."></textarea></label>
+        </div>
+        <div class="approval-buttons"><button id="approveDesignButton" class="button button-primary" type="button">Approve selected design</button><button id="requestChangeButton" class="button button-secondary" type="button">Request changes</button></div>
+        <p id="decisionMessage" class="inline-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel order-summary-panel">
+        <div class="mini-heading"><div><p class="eyebrow">Tailoring order</p><h2>Consultation summary</h2></div><span id="publicOrderStatus" class="status-badge"></span></div>
+        <dl class="order-summary"><div><dt>Quote</dt><dd id="publicQuote"></dd></div><div><dt>Deposit recorded</dt><dd id="publicDeposit"></dd></div><div><dt>Due date</dt><dd id="publicDueDate"></dd></div></dl>
+      </section>
+    </section>
+
+    <section id="approvalError" class="panel hidden"><h1>This approval link is unavailable</h1><p id="approvalErrorCopy"></p></section>
+  </main>
+
+  <script type="module" src="./js/approval.js"></script>
+</body>
+</html>
