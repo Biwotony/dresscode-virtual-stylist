@@ -1,25 +1,59 @@
-# Dresscode Virtual Stylist
+# Dresscode Real Try-On
 
-A dependency-free web project for visualising event outfits on an uploaded model photo.
+Dresscode is an identity-preserving AI virtual fitting studio. It replaces the old canvas-overlay workflow with a staged image-generation pipeline inspired by the strongest ideas in [`tandpfun/wardrobe`](https://github.com/tandpfun/wardrobe), while keeping Dresscode's event, measurement and custom-design workflow.
 
-## What is included
+## What is implemented
 
-- Model photo upload with drag-and-drop and immediate preview
-- Optional inspiration image upload
-- Measurements in centimetres or inches with automatic conversion
-- Event, garment, fit, fabric and colour controls
-- Free-text outfit description
-- Structured generation brief
-- Local canvas-based outfit concept preview
-- Before/after comparison slider
-- PNG preview and text brief downloads
-- Provider-ready `/api/generate-look` endpoint
-- Automated tests and GitHub Actions
-- Static GitHub Pages demo workflow
+- model photo upload
+- optional inspiration upload
+- centimetre/inch measurement conversion
+- event, garment, fit, fabric, colour and written design controls
+- garment detection with structured image analysis
+- reviewable inspiration crop
+- clean garment reconstruction
+- local chroma cleanup with `sharp`
+- identity-preserving image editing
+- one to three try-on variations
+- approve, reject and corrective-regeneration actions
+- before/after comparison
+- private runtime job storage excluded from Git
+- same-origin Node deployment or GitHub Pages + separate backend
+- Render Blueprint and Dockerfile
+
+## Real try-on flow
+
+```text
+Model photo + inspiration + brief
+             ↓
+Analyse and crop the intended garment
+             ↓
+User approves or regenerates the crop
+             ↓
+Create a clean transparent garment reference
+             ↓
+User approves or regenerates the garment
+             ↓
+Generate natural identity-preserving try-on variations
+             ↓
+User approves, rejects or corrects a selected result
+```
+
+The final image prompt preserves the original identity, face, hair, hands, pose, body proportions, camera angle, framing, lighting and background. It asks the image model to replace only the clothing and render realistic drape, folds, seams, hems, contact shadows and occlusion.
+
+## Requirements
+
+- Node.js 20 or newer
+- an OpenAI API key
+- network access from the backend
 
 ## Run locally
 
-Requirements: Node.js 20 or newer.
+```bash
+npm install
+cp .env.example .env
+```
+
+Add your API key to `.env`, export the values into your shell or hosting platform, then run:
 
 ```bash
 npm start
@@ -27,75 +61,41 @@ npm start
 
 Open `http://localhost:4173`.
 
-For automatic restart while editing:
+## Environment
 
 ```bash
-npm run dev
+OPENAI_API_KEY=
+OPENAI_API_BASE_URL=https://api.openai.com/v1
+OPENAI_VISION_MODEL=gpt-5-mini
+OPENAI_IMAGE_MODEL=gpt-image-1
+OPENAI_IMAGE_QUALITY=high
+DRESSCODE_DATA_DIR=.dresscode
+CORS_ORIGIN=https://biwotony.github.io
 ```
 
-Run validation:
+Never put `OPENAI_API_KEY` in `public/config.js` or any browser file.
+
+## GitHub Pages
+
+GitHub Pages hosts only the frontend. It cannot execute the real try-on pipeline.
+
+After deploying the Node backend, open the Pages app, expand **Backend connection**, enter the backend URL and save it. The backend must allow the Pages origin through `CORS_ORIGIN`.
+
+## Validation
 
 ```bash
 npm test
 npm run check
 ```
 
-## Connect a photorealistic virtual try-on provider
+## Documentation
 
-Copy the environment template:
+- [Architecture](docs/architecture.md)
+- [Deployment](docs/deployment.md)
 
-```bash
-cp .env.example .env
-```
+## Privacy
 
-Set:
-
-```bash
-TRY_ON_API_URL=https://your-provider.example/generate
-TRY_ON_API_KEY=your-secret-key
-```
-
-Export the values before starting the server, or configure them in your hosting platform. The expected request and response formats are documented in [`docs/architecture.md`](docs/architecture.md).
-
-Without a provider, the app remains fully usable in local concept mode.
-
-## Deploy
-
-### Static demo on GitHub Pages
-
-The included Pages workflow deploys the `public` directory. File uploads, measurements, the local concept renderer and downloads work in this mode. The external generation API does not run on GitHub Pages.
-
-Enable Pages in the repository settings and select **GitHub Actions** as the source.
-
-### Full Node deployment
-
-Deploy the repository to a platform that can run:
-
-```bash
-npm start
-```
-
-Set `PORT`, `TRY_ON_API_URL` and `TRY_ON_API_KEY` in the platform environment.
-
-## Repository structure
-
-```text
-.
-├── .github/workflows/      # CI and GitHub Pages deployment
-├── docs/architecture.md    # Provider contract and production notes
-├── public/                 # Browser application
-│   ├── index.html
-│   ├── styles.css
-│   └── js/
-├── tests/                  # Node test runner tests
-├── .env.example
-├── package.json
-└── server.mjs
-```
-
-## Important limitation
-
-The built-in canvas renderer is a visual concept tool, not a precise or photorealistic fitting engine. Real garment replacement requires a virtual try-on or image-generation provider connected through the included server adapter.
+Photos and generated assets are written to `DRESSCODE_DATA_DIR`, which is ignored by Git. A public production release still needs authentication, automatic deletion, access-controlled assets, rate limits and a published retention policy.
 
 ## Licence
 

@@ -1,14 +1,17 @@
 {
   "name": "dresscode-virtual-stylist",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "A virtual event-outfit design studio with photo uploads, measurements, inspiration references and a provider-ready try-on API.",
+  "description": "A staged, identity-preserving AI virtual try-on studio with garment extraction, review and corrective regeneration.",
   "type": "module",
   "scripts": {
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
     "test": "node --test",
-    "check": "node --check server.mjs && node --check public/js/app.js && node --check public/js/api.js && node --check public/js/brief.js && node --check public/js/canvas.js && node --check public/js/measurements.js"
+    "check": "node --check server.mjs && node --check lib/image-utils.mjs && node --check lib/openai-tryon.mjs && node --check lib/job-store.mjs && node --check lib/tryon-pipeline.mjs && node --check public/js/app.js && node --check public/js/api.js && node --check public/js/brief.js && node --check public/js/canvas.js && node --check public/js/measurements.js"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
   },
   "engines": {
     "node": ">=20"

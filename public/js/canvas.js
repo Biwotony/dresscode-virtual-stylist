@@ -4,7 +4,7 @@ function loadImage(source) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('Unable to read the selected image.'));
+    image.onerror = () => reject(new Error('Unable to load the model image.'));
     image.src = source;
   });
 }
@@ -38,7 +38,7 @@ function createFabricPattern(context, fabric, colour) {
   patternCanvas.width = 28;
   patternCanvas.height = 28;
   const patternContext = patternCanvas.getContext('2d');
-  patternContext.fillStyle = hexToRgba(colour, 0.76);
+  patternContext.fillStyle = hexToRgba(colour, 0.72);
   patternContext.fillRect(0, 0, 28, 28);
   patternContext.strokeStyle = 'rgba(255,255,255,0.18)';
   patternContext.fillStyle = 'rgba(255,255,255,0.16)';
@@ -59,7 +59,7 @@ function createFabricPattern(context, fabric, colour) {
     gradient.addColorStop(1, 'rgba(0,0,0,0.12)');
     patternContext.fillStyle = gradient;
     patternContext.fillRect(0, 0, 28, 28);
-  } else if (fabric === 'Linen') {
+  } else if (fabric === 'Linen' || fabric === 'Cotton blend') {
     for (let position = 0; position < 28; position += 4) {
       patternContext.beginPath();
       patternContext.moveTo(position, 0);
@@ -184,6 +184,49 @@ function traceSuit(context, box, fit) {
   context.closePath();
 }
 
+function traceTwoPiece(context, box, fit, lowerKind) {
+  const centreX = box.x + box.width * 0.5;
+  const shoulderY = box.y + box.height * 0.25;
+  const waistY = box.y + box.height * 0.48;
+  const hemTopY = box.y + box.height * 0.58;
+  const ankleY = box.y + box.height * 0.91;
+  const shoulderWidth = box.width * 0.2;
+  const waistWidth = box.width * (fit === 'Fitted' ? 0.14 : 0.18);
+  const lowerWidth = box.width * (lowerKind === 'skirt' ? 0.28 : 0.12);
+  const gap = box.width * 0.024;
+
+  context.beginPath();
+  context.moveTo(centreX - shoulderWidth, shoulderY);
+  context.quadraticCurveTo(centreX - box.width * 0.16, shoulderY + box.height * 0.08, centreX - waistWidth, waistY);
+  context.lineTo(centreX - waistWidth * 0.9, hemTopY);
+  context.lineTo(centreX + waistWidth * 0.9, hemTopY);
+  context.lineTo(centreX + waistWidth, waistY);
+  context.quadraticCurveTo(centreX + box.width * 0.16, shoulderY + box.height * 0.08, centreX + shoulderWidth, shoulderY);
+  context.quadraticCurveTo(centreX, shoulderY + box.height * 0.05, centreX - shoulderWidth, shoulderY);
+  context.closePath();
+
+  if (lowerKind === 'skirt') {
+    context.beginPath();
+    context.moveTo(centreX - waistWidth * 0.9, hemTopY);
+    context.quadraticCurveTo(centreX - lowerWidth, box.y + box.height * 0.76, centreX - lowerWidth * 0.95, ankleY);
+    context.quadraticCurveTo(centreX, ankleY + box.height * 0.025, centreX + lowerWidth * 0.95, ankleY);
+    context.quadraticCurveTo(centreX + lowerWidth, box.y + box.height * 0.76, centreX + waistWidth * 0.9, hemTopY);
+    context.closePath();
+  } else {
+    context.beginPath();
+    context.moveTo(centreX - waistWidth * 0.9, hemTopY);
+    context.lineTo(centreX - gap, hemTopY + box.height * 0.03);
+    context.lineTo(centreX - gap - lowerWidth, ankleY);
+    context.lineTo(centreX - gap + lowerWidth * 0.18, ankleY);
+    context.lineTo(centreX, hemTopY + box.height * 0.1);
+    context.lineTo(centreX + gap - lowerWidth * 0.18, ankleY);
+    context.lineTo(centreX + gap + lowerWidth, ankleY);
+    context.lineTo(centreX + gap, hemTopY + box.height * 0.03);
+    context.lineTo(centreX + waistWidth * 0.9, hemTopY);
+    context.closePath();
+  }
+}
+
 function addHighlights(context, box, garment) {
   context.save();
   context.strokeStyle = 'rgba(255,255,255,0.38)';
@@ -191,7 +234,7 @@ function addHighlights(context, box, garment) {
   context.lineCap = 'round';
   const centreX = box.x + box.width * 0.5;
 
-  if (garment === 'Gown' || garment === 'Kaftan') {
+  if (garment === 'Gown' || garment === 'Kaftan' || garment === 'Blouse and skirt') {
     for (const offset of [-0.08, 0, 0.08]) {
       context.beginPath();
       context.moveTo(centreX + box.width * offset, box.y + box.height * 0.46);
@@ -248,6 +291,8 @@ export async function renderConceptPreview({
   if (garment === 'Suit') traceSuit(context, box, fit);
   else if (garment === 'Jumpsuit') traceJumpsuit(context, box, fit);
   else if (garment === 'Kaftan') traceKaftan(context, box, fit);
+  else if (garment === 'Blouse and skirt') traceTwoPiece(context, box, fit, 'skirt');
+  else if (garment === 'Top and trousers') traceTwoPiece(context, box, fit, 'trousers');
   else traceGown(context, box, ratios, fit);
 
   context.fill();

@@ -1,69 +1,131 @@
-# Architecture
+# Real try-on architecture
 
-## Browser application
+## Pipeline
 
-The browser owns the user-facing workflow:
+A Dresscode job moves through three reviewable stages.
 
-1. Select a model photo.
-2. Enter optional measurements in centimetres or inches.
-3. Describe an outfit and select event, garment, fit, fabric and colour.
-4. Upload an optional inspiration image.
-5. Build a structured generation brief.
-6. Create an immediate local concept rendering on a canvas.
-7. Send the model image, inspiration image and brief to `/api/generate-look`.
-8. Replace the local concept rendering when a configured provider returns a generated image.
+### 1. Inspiration reference
 
-The local canvas renderer is deliberately described as a concept preview. It is useful for testing the complete workflow without sending photos to a third party, but it is not a photorealistic try-on model.
+When an inspiration image is supplied, the server:
 
-## Node server
+1. analyses the image with a vision-capable Responses API model
+2. identifies the dominant intended garment or complete look
+3. returns structured metadata and a normalised bounding box
+4. crops the reference with local image processing
+5. pauses for user approval
 
-`server.mjs` uses only built-in Node APIs. It serves the static application and exposes:
+When no inspiration is supplied, this stage and the clean-garment stage are skipped.
 
-- `GET /api/health`
-- `POST /api/generate-look`
+### 2. Clean garment reconstruction
 
-When `TRY_ON_API_URL` is not configured, the generation endpoint reports demo mode and the browser keeps the local concept preview.
+After crop approval, the server:
 
-When `TRY_ON_API_URL` is configured, the server forwards this JSON shape:
+1. sends the cropped reference to the image-edit endpoint
+2. asks for a complete empty garment on a distant chroma background
+3. removes the wearer and unrelated scene content
+4. removes the chroma background locally with `sharp`
+5. frames the transparent garment reference consistently
+6. pauses for approval or corrective regeneration
+
+This step gives the final try-on model a much cleaner and more exact clothing reference than a noisy inspiration photograph.
+
+### 3. Identity-preserving try-on
+
+After garment approval, the server sends:
+
+1. the exact original model photo
+2. the approved clean garment image, when available
+3. the structured event, design, fabric, colour and measurement brief
+
+The prompt explicitly requests preservation of identity, face, hair, hands, body proportions, pose, camera angle, framing, lighting and background. It requests body-aware fabric drape, folds, seams, contact shadows and occlusion, and explicitly prohibits an overlay appearance.
+
+The server produces one to three variations. The user can approve one, reject the job, or regenerate a selected variation with a corrective prompt. Corrective regeneration includes the failed result as an additional reference.
+
+## Runtime storage
+
+Jobs are stored beneath `DRESSCODE_DATA_DIR` and never under a tracked repository path. Each job directory contains:
+
+- the normalised model image
+- the inspiration image
+- reference crops
+- clean garment images
+- try-on variations
+- `job.json`
+
+The `DELETE /api/try-on/jobs/:id` endpoint removes the job directory.
+
+## API
+
+### Configuration
+
+`GET /api/health`
+
+Returns whether the OpenAI-backed try-on pipeline is ready.
+
+### Create a job
+
+`POST /api/try-on/jobs`
 
 ```json
 {
   "modelImage": "data:image/jpeg;base64,...",
   "inspirationImage": "data:image/png;base64,...",
+  "variationCount": 3,
   "brief": {
     "event": "Wedding",
     "garment": "Gown",
     "fit": "Fitted",
     "fabric": "Silk",
     "colour": "#17634e",
-    "idea": "...",
-    "measurements": {},
-    "instructions": []
+    "idea": "A floor-length emerald gown...",
+    "measurements": {}
   }
 }
 ```
 
-The external service must return either:
+### Read a job
+
+`GET /api/try-on/jobs/:id`
+
+### Review actions
+
+`POST /api/try-on/jobs/:id/stages/:stage/:action`
+
+Stages:
+
+- `reference`
+- `garment`
+- `tryon`
+
+Actions:
+
+- `approve`
+- `reject`
+- `regenerate`
+
+Regeneration body:
 
 ```json
-{ "imageUrl": "https://example.com/generated-look.png" }
+{
+  "prompt": "Preserve the original sleeve construction and remove the invented belt.",
+  "variationIndex": 0
+}
 ```
 
-or:
+`variationIndex` applies to try-on regeneration and approval.
 
-```json
-{ "imageBase64": "iVBORw0KGgo..." }
-```
+### Delete a job
 
-## Production recommendations
+`DELETE /api/try-on/jobs/:id`
 
-Before launching with real customers:
+## Production hardening
 
-- Replace data URLs with multipart uploads or signed object-storage URLs.
-- Add authentication and consent records.
-- Define retention and deletion rules for user photos.
-- Add background removal or human segmentation before garment generation.
-- Add pose and body-landmark detection for more accurate placement.
-- Store measurement profiles only with explicit user consent.
-- Add moderation, rate limiting and provider timeouts.
-- Keep provider credentials only on the server.
+The current filesystem job store is suitable for an early single-instance product. For larger deployment:
+
+- place source and output images in private object storage
+- store job state in a database or durable queue
+- use signed short-lived asset URLs
+- authenticate every job action
+- process jobs with background workers
+- enforce per-user cost and concurrency limits
+- automatically delete personal images after a defined retention period
