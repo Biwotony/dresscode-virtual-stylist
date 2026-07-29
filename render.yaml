@@ -35,6 +35,8 @@ services:
         value: true
       - key: DRESSCODE_DATA_DIR
         value: /var/data/dresscode
+      - key: DRESSCODE_RETENTION_DAYS
+        value: 7
       - key: CORS_ORIGIN
         value: https://biwotony.github.io
     disk:
