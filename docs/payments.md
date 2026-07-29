@@ -25,12 +25,21 @@ PAYMENTS_REQUIRED=true
 
 ### Packages
 
-The application has default packages, but production pricing can be changed without editing browser code:
+The default production packages are:
+
+```text
+Single Try-On: KES 350 / 1 credit
+Event Pack: KES 1,200 / 4 credits
+Style Pack: KES 2,500 / 10 credits
+Studio Pack: KES 11,000 / 50 credits
+```
+
+Production pricing can be changed without editing browser code:
 
 ```bash
 PAYSTACK_PLANS_JSON='[
-  {"id":"single","name":"Single Try-On","price":250,"credits":1,"description":"One realistic try-on session"},
-  {"id":"event","name":"Event Pack","price":800,"credits":4,"description":"Four try-on sessions"}
+  {"id":"single","name":"Single Try-On","price":350,"credits":1,"description":"One realistic try-on session"},
+  {"id":"event","name":"Event Pack","price":1200,"credits":4,"description":"Four try-on sessions"}
 ]'
 ```
 
@@ -41,15 +50,16 @@ PAYSTACK_PLANS_JSON='[
 1. Obtain test keys from Paystack.
 2. Add the test secret key to the backend environment.
 3. Enable the intended payment channels on the Paystack account.
-4. Set the webhook URL to:
+4. Enable transaction receipts to customers and set the business support email shown on receipts.
+5. Set the webhook URL to:
 
 ```text
 https://YOUR-BACKEND.example.com/api/payments/webhook
 ```
 
-5. Confirm `PAYSTACK_CALLBACK_URL` points to the frontend page.
-6. Test payment completion, webhook delivery and credit fulfilment.
-7. Replace the test secret with the live secret only after end-to-end testing.
+6. Confirm `PAYSTACK_CALLBACK_URL` points to the frontend page.
+7. Test payment completion, webhook delivery, receipt delivery, account recovery and credit fulfilment.
+8. Replace the test secret with the live secret only after end-to-end testing.
 
 ## API endpoints
 
@@ -57,13 +67,13 @@ https://YOUR-BACKEND.example.com/api/payments/webhook
 
 `GET /api/payments/config`
 
-Returns enabled status, currency, payment requirement and public package information.
+Returns enabled status, currency, payment requirement, account-recovery support and public package information.
 
-### Create a guest credit wallet
+### Create a temporary browser wallet
 
 `POST /api/payments/wallets`
 
-Returns a private bearer token once. The frontend stores it in browser local storage.
+Returns a private bearer token. The browser uses this token for the current session before and after the wallet is attached to a paid email account.
 
 ### Read wallet
 
@@ -86,7 +96,9 @@ Authorization: Bearer WALLET_TOKEN
 }
 ```
 
-The backend chooses the amount and credits. The frontend cannot submit a custom price.
+The backend chooses the amount and credits. The frontend cannot submit a custom price. The email is sent to Paystack as the transaction customer email and is saved with the payment intent.
+
+After the first successful payment, Dresscode links the paid wallet to that normalized email address. A second browser cannot create a separate paid wallet for the same email without first recovering the existing account.
 
 ### Verify callback
 
@@ -100,11 +112,32 @@ The server verifies:
 - currency matches
 - credits have not already been delivered
 
+A successful verification links the wallet to the checkout email.
+
+### Recover paid credits
+
+The browser exposes **Recover paid credits on this browser**. The user enters:
+
+- the same email used for payment
+- a successful Paystack transaction reference from the receipt
+
+The server retrieves the saved payment intent, verifies the transaction directly with Paystack, checks the email, amount, currency, status and reference, then issues a new wallet token. Issuing the new token invalidates the older browser token.
+
+This flow also recovers wallets created before email account linking was introduced, provided the successful payment intent and Paystack transaction still exist.
+
+The current recovery method is an interim email-and-receipt credential. A full user account with magic-link sign-in remains the preferred longer-term authentication model.
+
 ### Webhook
 
 `POST /api/payments/webhook`
 
-The webhook validates `x-paystack-signature` using HMAC SHA-512 and processes `charge.success` events idempotently.
+The webhook validates `x-paystack-signature` using HMAC SHA-512 and processes `charge.success` events idempotently. Webhook fulfilment also links the paid wallet to its checkout email.
+
+## Receipts
+
+Dresscode passes the entered receipt email to Paystack during transaction initialization. Paystack receipt delivery is controlled by the merchant's transaction-receipt preference in the Paystack dashboard.
+
+Dresscode currently displays and stores the successful transaction reference for recovery, but it does not send a second independent Dresscode-branded receipt email.
 
 ## Credit rules
 
@@ -115,15 +148,12 @@ When `PAYMENTS_REQUIRED=true`:
 - if the job cannot be created after deduction, the credit is restored
 - payment fulfilment and usage deductions are idempotent
 
-## Current wallet limitation
+## Remaining account work
 
-The guest wallet token is a bearer credential saved in the browser. It is suitable for an MVP but not a replacement for user accounts.
+Email-linked receipt recovery removes the browser-only loss risk for paid credits, but it is not the final account system. Before broad multi-user scaling:
 
-Before scaling:
-
-- add email or social sign-in
-- attach wallets to authenticated users
-- add account recovery
-- restrict try-on jobs and assets by user
-- provide transaction history and receipts
-- define refund and expiry policies
+- add email magic-link or social sign-in
+- attach consultation studios and credit wallets to the same authenticated account
+- add rate limiting and recovery-attempt auditing
+- provide a complete transaction and receipt history
+- define refund, transfer and credit-expiry policies
