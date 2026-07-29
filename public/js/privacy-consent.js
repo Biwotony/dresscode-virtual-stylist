@@ -1,4 +1,4 @@
-const CONSENT_VERSION = '2026-07-29';
+const CONSENT_VERSION = '2026-07-29-compact';
 const STORAGE_PREFIX = 'dresscode-client-consent:';
 let activeClientId = null;
 
@@ -27,7 +27,7 @@ function writeConsent(clientId, confirmed) {
       version: CONSENT_VERSION
     }));
   } catch {
-    // Consent still applies for this page even when browser storage is unavailable.
+    // Consent still applies for this page when browser storage is unavailable.
   }
 }
 
@@ -58,19 +58,15 @@ function mountPrivacyNotice() {
 
   const notice = document.createElement('section');
   notice.className = 'privacy-consent-card';
-  notice.setAttribute('aria-labelledby', 'privacyConsentTitle');
   notice.innerHTML = `
-    <span class="privacy-status-label">Current MVP data handling</span>
-    <h3 id="privacyConsentTitle">Privacy, retention and third-party processing</h3>
-    <ul>
-      <li>Saved client photos, measurements, inspiration images and design versions currently remain on the configured Dresscode backend disk until the underlying records and files are permanently removed. Automatic 30, 60 or 90-day purging is not active yet.</li>
-      <li><strong>Reset canvas is not deletion.</strong> A permanent-delete control is not yet available in this screen, so do not use Dresscode for a client who requires immediate self-service deletion.</li>
-      <li>When a try-on is generated, the model and inspiration images are sent to the OpenAI API. OpenAI states that API data is not used to train models by default and that image-generation or image-edit content may be retained for up to 30 days in abuse-monitoring logs, unless approved retention controls apply. Legal or safety exceptions may require longer retention.</li>
-    </ul>
     <label class="consent-check">
       <input id="clientUploadConsent" type="checkbox">
       <span>I confirm I have my client's permission to upload and store their photo for this consultation.</span>
     </label>
+    <details class="privacy-fine-print">
+      <summary>See how we handle this data</summary>
+      <p>Client photos, measurements, inspiration images and generated try-ons are automatically deleted from Dresscode after 7 days. Try-on images are processed through the OpenAI API; API inputs and outputs are not used to train models by default and may be kept for up to 30 days in safety and abuse-monitoring logs, unless approved retention controls apply.</p>
+    </details>
     <p id="privacyConsentError" class="privacy-consent-error" role="alert" aria-live="polite"></p>
   `;
 
