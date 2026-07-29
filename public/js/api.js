@@ -92,6 +92,13 @@ export function initializeCreditPayment({ email, planId }) {
   }, { wallet: true });
 }
 
+export function recoverCreditWallet({ email, reference }) {
+  return request('/api/payments/initialize', {
+    method: 'POST',
+    body: JSON.stringify({ email, planId: `recover:${String(reference || '').trim()}` })
+  }, { wallet: true });
+}
+
 export function verifyCreditPayment(reference) {
   return request(`/api/payments/verify/${encodeURIComponent(reference)}`, { cache: 'no-store' }, { wallet: true });
 }
