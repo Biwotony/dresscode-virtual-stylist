@@ -6,7 +6,7 @@ import {
   recoverCreditWallet,
   setWalletToken,
   verifyCreditPayment
-} from './api.js';
+} from './api.js?v=20260729-2';
 
 const PAYMENT_EMAIL_KEY = 'dresscode-payment-email';
 const LAST_REFERENCE_KEY = 'dresscode-last-payment-reference';
