@@ -3,30 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Dresscode helps tailors save client consultations, create realistic outfit previews and collect design approval.">
+  <meta name="description" content="Dresscode takes custom-fashion clients from inspiration to an approved tailoring order with client records, AI design previews, measurements, approvals and production handoff.">
   <meta name="theme-color" content="#0d1117">
-  <title>Dresscode | Tailor Consultation & Virtual Try-On</title>
-  <link rel="stylesheet" href="./styles.css?v=20260729-3">
-  <link rel="stylesheet" href="./consultations.css?v=20260729-3">
-  <link rel="stylesheet" href="./privacy.css?v=20260729">
+  <title>Dresscode | From Inspiration to Approved Tailoring Order</title>
+  <link rel="stylesheet" href="./styles.css?v=20260730-1">
+  <link rel="stylesheet" href="./consultations.css?v=20260730-1">
+  <link rel="stylesheet" href="./privacy.css?v=20260730-1">
+  <link rel="stylesheet" href="./product.css?v=20260730-1">
   <script src="./config.js"></script>
 </head>
 <body data-page="studio">
   <header class="site-header">
-    <a class="brand" href="#top"><span class="brand-mark">D</span><span><strong>Dresscode</strong><small>Tailor consultation studio</small></span></a>
-    <span id="providerBadge" class="status-badge">Checking backend…</span>
+    <a class="brand" href="#top"><span class="brand-mark">D</span><span><strong>Dresscode</strong><small>Custom fashion operating system</small></span></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="#how-it-works">Why Dresscode</a>
+      <a href="#studio">Studio</a>
+      <a href="#studio" class="header-cta">Start consultation</a>
+    </nav>
+    <div class="header-status"><span id="providerBadge" class="status-badge">Checking backend…</span></div>
   </header>
 
   <main id="top" class="app-shell">
-    <section class="hero panel">
+    <section class="hero hero-product panel">
       <div>
-        <p class="eyebrow">Client approval before sewing</p>
-        <h1>Tailor Consultation & Realistic Try-On</h1>
-        <p>Create a client record, save their photo and measurements, generate outfit versions, collect approval and record the tailoring order.</p>
+        <p class="eyebrow">Built for tailors, bridal studios and made-to-order designers</p>
+        <h1>From inspiration to an approved tailoring order.</h1>
+        <p class="hero-copy">Dresscode brings client records, measurements, AI design previews, revisions, branded approval and production handoff into one workspace—before fabric is cut.</p>
+        <div class="hero-actions">
+          <a class="button button-primary button-large" href="#studio">Start a client consultation</a>
+          <a class="button button-ghost button-large" href="#how-it-works">See the workflow</a>
+        </div>
+        <div class="audience-line"><span>Client-led consultations</span><span>Tailor-controlled design</span><span>Approval before production</span></div>
       </div>
-      <ol class="pipeline-summary">
-        <li>Create the client consultation</li><li>Generate and refine the outfit</li><li>Share approval and record the order</li>
-      </ol>
+      <aside class="journey-card" aria-label="Dresscode workflow">
+        <span>The complete decision journey</span>
+        <div class="journey-step"><b>1</b><div><strong>Capture the client</strong><small>Photo, measurements, event and preferences</small></div></div>
+        <div class="journey-step"><b>2</b><div><strong>Build the design</strong><small>Written idea, sketch, garment or fabric reference</small></div></div>
+        <div class="journey-step"><b>3</b><div><strong>Refine and approve</strong><small>Saved versions and a branded approval link</small></div></div>
+        <div class="journey-step"><b>4</b><div><strong>Move into production</strong><small>Quote, deposit, status and printable work order</small></div></div>
+      </aside>
+    </section>
+
+    <section class="proof-strip" aria-label="Dresscode capabilities">
+      <div><strong>Client record</strong><span>Measurements and consultation history</span></div>
+      <div><strong>Design lab</strong><span>Ideas, references, colour and fabric direction</span></div>
+      <div><strong>Client sign-off</strong><span>Versions and branded approval</span></div>
+      <div><strong>Production handoff</strong><span>Order details in one clear brief</span></div>
+    </section>
+
+    <section id="how-it-works" class="panel product-gap">
+      <div class="section-heading">
+        <div><p class="eyebrow">The gap Dresscode owns</p><h2>Not another image generator. Not another order book.</h2></div>
+        <p>Visual AI tools create pictures. Tailor software stores records. Dresscode connects the most valuable moment between them: turning a client’s idea into a design they understand, approve and pay to produce.</p>
+      </div>
+      <div class="capability-grid">
+        <article class="capability-card"><span class="capability-number">1</span><h3>Explore without wasting fabric</h3><p>Start from words, a sketch, a garment photo or a textile direction. Test the look on the client and make focused changes before committing to a sample.</p></article>
+        <article class="capability-card"><span class="capability-number">2</span><h3>Turn discussion into agreement</h3><p>Save clear versions, share the studio’s branded approval page and keep the chosen direction attached to the consultation rather than buried in chat messages.</p></article>
+        <article class="capability-card"><span class="capability-number">3</span><h3>Hand the decision to production</h3><p>Carry the approved visual, measurements, quote, deposit, due date and notes into a printable work order the tailoring team can actually use.</p></article>
+      </div>
+      <div class="control-line"><strong>AI where it saves time.</strong><span>The tailor remains the expert, relationship owner and final authority on fit and construction.</span></div>
+    </section>
+
+    <section id="studio" class="studio-intro">
+      <div><p class="eyebrow">Live consultation studio</p><h2>Run the whole client decision in one place.</h2></div>
+      <p>Create or load a client, shape the design direction, generate one strong preview, save revisions, collect approval and prepare the production handoff.</p>
     </section>
 
     <div class="workspace">
@@ -34,16 +74,16 @@
         <div id="consultationSetupMount"></div>
 
         <section class="panel step-panel">
-          <div class="step-heading"><span class="step-number">1</span><div><h2>Model photo</h2><p>Use a clear full-body or near full-body photo with visible arms and hands.</p></div></div>
+          <div class="step-heading"><span class="step-number">1</span><div><h2>Client photo</h2><p>Use a clear full-body or near full-body photo with visible arms and hands.</p></div></div>
           <div id="modelDropzone" class="dropzone">
             <input id="modelUpload" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp">
-            <button id="modelChooseButton" class="button button-primary" type="button">Choose model photo</button>
+            <button id="modelChooseButton" class="button button-primary" type="button">Choose client photo</button>
             <span>or drag and drop JPG, PNG or WEBP</span><strong id="modelFileName"></strong>
           </div>
         </section>
 
         <section class="panel step-panel">
-          <div class="step-heading split-heading"><div class="heading-with-number"><span class="step-number">2</span><div><h2>Measurements</h2><p>Saved as proportion guidance for the consultation—not a tailoring fit guarantee.</p></div></div><div class="segmented-control"><button id="unitCm" aria-pressed="true" type="button">cm</button><button id="unitIn" aria-pressed="false" type="button">in</button></div></div>
+          <div class="step-heading split-heading"><div class="heading-with-number"><span class="step-number">2</span><div><h2>Measurements</h2><p>Saved as proportion guidance and production context—not a virtual fitting guarantee.</p></div></div><div class="segmented-control"><button id="unitCm" aria-pressed="true" type="button">cm</button><button id="unitIn" aria-pressed="false" type="button">in</button></div></div>
           <div class="measurement-grid">
             <label><span>Height</span><div class="unit-input"><input id="height" type="number" min="0" step="0.1"><b class="unit-label">cm</b></div></label>
             <label><span>Chest / bust</span><div class="unit-input"><input id="chest" type="number" min="0" step="0.1"><b class="unit-label">cm</b></div></label>
@@ -57,8 +97,8 @@
         </section>
 
         <section class="panel step-panel">
-          <div class="step-heading"><span class="step-number">3</span><div><h2>Outfit direction</h2><p>Describe the design, then set the main attributes.</p></div></div>
-          <label class="field-label" for="idea">What do you have in mind?</label>
+          <div class="step-heading"><span class="step-number">3</span><div><h2>Design direction</h2><p>Build a clear, production-minded design brief before generating the visual.</p></div></div>
+          <label class="field-label" for="idea">What should the client see?</label>
           <textarea id="idea" rows="5" placeholder="A floor-length emerald silk gown, fitted at the waist, with long sleeves, soft draping and subtle gold embroidery."></textarea>
           <div class="design-grid">
             <label><span>Event</span><select id="event"><option>Wedding</option><option>Traditional ceremony</option><option>Gala</option><option>Corporate event</option><option>Birthday or party</option><option>Casual occasion</option></select></label>
@@ -66,21 +106,21 @@
             <label><span>Fit</span><select id="fit"><option>Balanced</option><option>Fitted</option><option>Relaxed</option><option>Flowing</option><option>Structured</option><option>Oversized</option></select></label>
             <label><span>Fabric</span><select id="fabric"><option>Silk</option><option>Satin</option><option>Lace</option><option>Crepe</option><option>Linen</option><option>Velvet</option><option>Cotton blend</option></select></label>
             <label><span>Primary colour</span><div class="colour-control"><input id="colour" type="color" value="#17634e"><input id="colourText" type="text" value="#17634e" maxlength="7"></div></label>
-            <label><span>Results</span><select id="variations"><option value="1" selected>1 look</option><option value="2">2 looks</option><option value="3">3 looks</option></select></label>
+            <label><span>Results</span><select id="variations"><option value="1" selected>1 focused look</option><option value="2">2 directions</option><option value="3">3 directions</option></select></label>
           </div>
         </section>
 
         <section class="panel step-panel">
-          <div class="step-heading"><span class="step-number">4</span><div><h2>Inspiration image</h2><p>Optional. Add a photo, sketch or outfit reference and save it with the consultation.</p></div></div>
+          <div class="step-heading"><span class="step-number">4</span><div><h2>Visual reference</h2><p>Optional. Add a garment photo, sketch, textile or outfit reference. Use the Design Lab to state what should be preserved.</p></div></div>
           <div id="inspirationDropzone" class="dropzone dropzone-secondary">
             <input id="inspirationUpload" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp">
-            <button id="inspirationChooseButton" class="button button-secondary" type="button">Choose inspiration</button>
+            <button id="inspirationChooseButton" class="button button-secondary" type="button">Choose reference</button>
             <span>or drag and drop an image</span><strong id="inspirationFileName"></strong>
           </div>
         </section>
 
-        <div class="action-row"><button id="generateButton" class="button button-primary button-large" type="button">Generate real try-on</button><button id="resetButton" class="button button-ghost" type="button">Reset canvas</button></div>
-        <p class="generation-note">High-quality generation can take one to three minutes. Save an acceptable result as a design version in the consultation panel.</p>
+        <div class="action-row"><button id="generateButton" class="button button-primary button-large" type="button">Generate client preview</button><button id="resetButton" class="button button-ghost" type="button">Reset canvas</button></div>
+        <p class="generation-note">High-quality generation can take one to three minutes. Aim for one strong client direction, then save focused revisions as new versions.</p>
         <p id="formMessage" class="form-message" role="alert" aria-live="polite"></p>
 
         <details class="panel developer-settings">
@@ -92,29 +132,32 @@
 
       <aside class="preview-column">
         <section class="panel preview-panel" style="position:static!important;top:auto!important">
-          <div class="preview-heading"><div><p class="eyebrow">Current result</p><h2 id="previewTitle">Upload a model to begin</h2></div><span id="previewMode" class="status-badge">Waiting</span></div>
-          <div id="previewStage" class="preview-stage empty"><div id="emptyPreview" class="empty-preview"><strong>Your client and results appear here</strong><span>Load a saved client or upload a model photo.</span></div><img id="beforeImage" alt="Original model photo"><div id="afterLayer" class="after-layer hidden"><img id="afterImage" alt="Generated try-on"></div><div id="splitHandle" class="split-handle hidden"><span></span></div></div>
+          <div class="preview-heading"><div><p class="eyebrow">Client visual</p><h2 id="previewTitle">Upload a client photo to begin</h2></div><span id="previewMode" class="status-badge">Waiting</span></div>
+          <div id="previewStage" class="preview-stage empty"><div id="emptyPreview" class="empty-preview"><strong>The client and design preview appear here</strong><span>Load a saved client or upload a clear photo.</span></div><img id="beforeImage" alt="Original client photo"><div id="afterLayer" class="after-layer hidden"><img id="afterImage" alt="Generated custom-fashion preview"></div><div id="splitHandle" class="split-handle hidden"><span></span></div></div>
           <label id="compareControl" class="compare-control hidden"><span>Before</span><input id="compareRange" type="range" min="0" max="100" value="55"><span>After</span></label>
           <div id="variationList" class="variation-list"></div>
-          <div class="preview-actions"><button id="downloadImageButton" class="button button-secondary" disabled type="button">Download image</button></div>
+          <div class="preview-actions"><button id="downloadImageButton" class="button button-secondary" disabled type="button">Download client preview</button></div>
         </section>
 
         <section id="jobPanel" class="panel hidden">
-          <div class="mini-heading"><div><p class="eyebrow">Try-on workflow</p><h2 id="jobTitle">Preparing</h2></div><span id="jobStatus" class="status-badge">Processing</span></div>
+          <div class="mini-heading"><div><p class="eyebrow">Visual workflow</p><h2 id="jobTitle">Preparing</h2></div><span id="jobStatus" class="status-badge">Processing</span></div>
           <div id="timeline" class="timeline"></div>
           <div id="reviewArea" class="review-area hidden"><img id="reviewImage" alt="Stage review"><div><h3 id="reviewTitle"></h3><p id="reviewCopy"></p><textarea id="correctionPrompt" rows="3" placeholder="Describe exactly what should be corrected."></textarea><div class="review-actions"><button id="approveButton" class="button button-primary" type="button">Approve</button><button id="regenerateButton" class="button button-secondary" type="button">Regenerate</button><button id="rejectButton" class="button button-ghost" type="button">Reject</button></div></div></div>
         </section>
 
         <div id="consultationToolsMount"></div>
 
-        <section id="inspirationPreviewPanel" class="panel hidden"><div class="mini-heading"><h2>Inspiration</h2><button id="removeInspirationButton" class="text-button" type="button">Remove</button></div><img id="inspirationPreview" class="inspiration-preview" alt="Inspiration image"></section>
+        <section id="inspirationPreviewPanel" class="panel hidden"><div class="mini-heading"><h2>Visual reference</h2><button id="removeInspirationButton" class="text-button" type="button">Remove</button></div><img id="inspirationPreview" class="inspiration-preview" alt="Inspiration image"></section>
       </aside>
     </div>
+
+    <footer class="site-footer"><span><strong>Dresscode</strong> — the client decision system for custom fashion.</span><span>Visual previews guide approval; final measurements, fitting and construction remain with the tailor.</span></footer>
   </main>
 
-  <script type="module" src="./js/app.js?v=20260729"></script>
-  <script type="module" src="./js/consultations-ui.js?v=20260729"></script>
-  <script type="module" src="./js/payments-ui.js?v=20260729-2"></script>
-  <script type="module" src="./js/privacy-consent.js?v=20260729-2"></script>
+  <script type="module" src="./js/app.js?v=20260730-1"></script>
+  <script type="module" src="./js/consultations-ui.js?v=20260730-1"></script>
+  <script type="module" src="./js/payments-ui.js?v=20260730-1"></script>
+  <script type="module" src="./js/privacy-consent.js?v=20260730-1"></script>
+  <script type="module" src="./js/product-studio.js?v=20260730-1"></script>
 </body>
 </html>
