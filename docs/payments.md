@@ -2,15 +2,28 @@
 
 ## Checkout approach
 
-Dresscode uses Paystack hosted checkout rather than collecting card or M-PESA credentials itself.
+Dresscode uses Paystack hosted checkout rather than collecting card or M-PESA credentials itself. The backend creates the transaction with server-controlled pricing and returns only the hosted checkout URL.
 
-The backend initializes the transaction with its secret key and returns only the Paystack authorization URL. The configured channels default to:
+The default channels are:
 
 ```text
 mobile_money,card
 ```
 
 For an enabled Kenyan Paystack account, `mobile_money` exposes M-PESA in checkout.
+
+## Account ownership
+
+A credit wallet is created when a verified Dresscode account is first provisioned. The wallet is linked to the account ID and account email on the server.
+
+- signing in on another device restores the same balance
+- clearing browser storage does not destroy or orphan paid credits
+- payment intents include both account ID and wallet ID
+- one account cannot verify or spend another account’s payment
+- first sign-in can claim or merge an older browser wallet
+- account deletion removes the wallet, intents and ledger files
+
+The browser session token authenticates payment requests. The old wallet bearer token is accepted only once during migration and is then removed from browser storage.
 
 ## Configuration
 
@@ -24,8 +37,6 @@ PAYMENTS_REQUIRED=true
 ```
 
 ### Packages
-
-The default production packages are:
 
 ```text
 Single Try-On: KES 350 / 1 credit
@@ -49,16 +60,16 @@ PAYSTACK_PLANS_JSON='[
 
 1. Obtain test keys from Paystack.
 2. Add the test secret key to the backend environment.
-3. Enable the intended payment channels on the Paystack account.
-4. Enable transaction receipts to customers and set the business support email shown on receipts.
+3. Enable the intended payment channels.
+4. Enable transaction receipts to customers and set the support email shown on receipts.
 5. Set the webhook URL to:
 
 ```text
 https://YOUR-BACKEND.example.com/api/payments/webhook
 ```
 
-6. Confirm `PAYSTACK_CALLBACK_URL` points to the frontend page.
-7. Test payment completion, webhook delivery, receipt delivery, account recovery and credit fulfilment.
+6. Confirm `PAYSTACK_CALLBACK_URL` points to the frontend.
+7. Test sign-in, checkout, callback verification, webhook fulfilment and cross-device balance restoration.
 8. Replace the test secret with the live secret only after end-to-end testing.
 
 ## API endpoints
@@ -67,22 +78,16 @@ https://YOUR-BACKEND.example.com/api/payments/webhook
 
 `GET /api/payments/config`
 
-Returns enabled status, currency, payment requirement, account-recovery support and public package information.
+Returns enabled status, currency, payment requirement and public package information.
 
-### Create a temporary browser wallet
-
-`POST /api/payments/wallets`
-
-Returns a private bearer token. The browser uses this token for the current session before and after the wallet is attached to a paid email account.
-
-### Read wallet
+### Read the account wallet
 
 `GET /api/payments/wallet`
 
-Requires:
+Requires the authenticated Dresscode account session:
 
 ```http
-Authorization: Bearer WALLET_TOKEN
+Authorization: Bearer ACCOUNT_SESSION_TOKEN
 ```
 
 ### Initialize checkout
@@ -96,9 +101,7 @@ Authorization: Bearer WALLET_TOKEN
 }
 ```
 
-The backend chooses the amount and credits. The frontend cannot submit a custom price. The email is sent to Paystack as the transaction customer email and is saved with the payment intent.
-
-After the first successful payment, Dresscode links the paid wallet to that normalized email address. A second browser cannot create a separate paid wallet for the same email without first recovering the existing account.
+The submitted email must match the signed-in account email. The backend chooses the price and credits; the browser cannot submit a custom amount.
 
 ### Verify callback
 
@@ -106,54 +109,36 @@ After the first successful payment, Dresscode links the paid wallet to that norm
 
 The server verifies:
 
+- the session account owns the saved payment intent
+- the intent belongs to the account wallet
 - transaction status is `success`
-- reference matches
-- amount matches the saved payment intent
-- currency matches
+- reference, amount and currency match
 - credits have not already been delivered
-
-A successful verification links the wallet to the checkout email.
-
-### Recover paid credits
-
-The browser exposes **Recover paid credits on this browser**. The user enters:
-
-- the same email used for payment
-- a successful Paystack transaction reference from the receipt
-
-The server retrieves the saved payment intent, verifies the transaction directly with Paystack, checks the email, amount, currency, status and reference, then issues a new wallet token. Issuing the new token invalidates the older browser token.
-
-This flow also recovers wallets created before email account linking was introduced, provided the successful payment intent and Paystack transaction still exist.
-
-The current recovery method is an interim email-and-receipt credential. A full user account with magic-link sign-in remains the preferred longer-term authentication model.
 
 ### Webhook
 
 `POST /api/payments/webhook`
 
-The webhook validates `x-paystack-signature` using HMAC SHA-512 and processes `charge.success` events idempotently. Webhook fulfilment also links the paid wallet to its checkout email.
+The webhook validates `x-paystack-signature` using HMAC SHA-512 and processes `charge.success` idempotently.
 
 ## Receipts
 
-Dresscode passes the entered receipt email to Paystack during transaction initialization. Paystack receipt delivery is controlled by the merchant's transaction-receipt preference in the Paystack dashboard.
+Dresscode sends the account email to Paystack as the transaction customer email. Customer receipt delivery depends on the merchant’s transaction-receipt preference in Paystack.
 
-Dresscode currently displays and stores the successful transaction reference for recovery, but it does not send a second independent Dresscode-branded receipt email.
+Dresscode does not currently send a second branded payment receipt email. The transaction reference and ledger remain available in the account wallet record.
 
 ## Credit rules
 
 When `PAYMENTS_REQUIRED=true`:
 
-- one credit is consumed when a new real try-on job successfully starts
+- one credit is consumed when a new real try-on job starts
 - crop approval, garment approval and corrective regeneration do not consume another credit
-- if the job cannot be created after deduction, the credit is restored
-- payment fulfilment and usage deductions are idempotent
+- the credit is restored when job creation fails after deduction
+- payment fulfilment, deductions and refunds are idempotent
 
-## Remaining account work
+## Operational limits
 
-Email-linked receipt recovery removes the browser-only loss risk for paid credits, but it is not the final account system. Before broad multi-user scaling:
-
-- add email magic-link or social sign-in
-- attach consultation studios and credit wallets to the same authenticated account
-- add rate limiting and recovery-attempt auditing
-- provide a complete transaction and receipt history
-- define refund, transfer and credit-expiry policies
+- Wallets and intents are currently JSON files rather than database transactions.
+- In-process locks protect a single server instance only.
+- Define refund, transfer and credit-expiry policies before scaling paid usage.
+- Keep Paystack secrets on the backend and use webhook verification in production.
