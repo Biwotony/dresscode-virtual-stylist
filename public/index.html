@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="./consultations.css?v=20260730-1">
   <link rel="stylesheet" href="./privacy.css?v=20260730-1">
   <link rel="stylesheet" href="./product.css?v=20260730-1">
+  <link rel="stylesheet" href="./auth.css?v=20260730-auth">
   <script src="./config.js"></script>
 </head>
 <body data-page="studio">
@@ -20,8 +21,10 @@
       <a href="#studio">Studio</a>
       <a href="#studio" class="header-cta">Start consultation</a>
     </nav>
-    <div class="header-status"><span id="providerBadge" class="status-badge">Checking backend…</span></div>
+    <div class="header-status"><span id="providerBadge" class="status-badge">Checking backend…</span><div id="authMount"></div></div>
   </header>
+
+  <div id="authGateMount"></div>
 
   <main id="top" class="app-shell">
     <section class="hero hero-product panel">
@@ -154,10 +157,11 @@
     <footer class="site-footer"><span><strong>Dresscode</strong> — the client decision system for custom fashion.</span><span>Visual previews guide approval; final measurements, fitting and construction remain with the tailor.</span></footer>
   </main>
 
-  <script type="module" src="./js/app.js?v=20260730-1"></script>
-  <script type="module" src="./js/consultations-ui.js?v=20260730-1"></script>
-  <script type="module" src="./js/payments-ui.js?v=20260730-1"></script>
-  <script type="module" src="./js/privacy-consent.js?v=20260730-1"></script>
-  <script type="module" src="./js/product-studio.js?v=20260730-1"></script>
+  <script type="module" src="./js/auth-ui.js?v=20260730-auth"></script>
+  <script type="module" src="./js/app.js?v=20260730-auth"></script>
+  <script type="module" src="./js/consultations-ui.js?v=20260730-auth"></script>
+  <script type="module" src="./js/payments-ui.js?v=20260730-auth"></script>
+  <script type="module" src="./js/privacy-consent.js?v=20260730-auth"></script>
+  <script type="module" src="./js/product-studio.js?v=20260730-auth"></script>
 </body>
 </html>
