@@ -1,63 +1,75 @@
-# Dresscode — Tailor Consultation & Realistic Virtual Try-On
+# Dresscode — Custom Fashion Consultation System
 
-Dresscode is a client-consultation platform for tailors, designers and occasion-wear boutiques. It combines identity-preserving AI try-on with saved client records, design versioning, branded approval links, deposits and tailoring-order tracking.
+Dresscode takes a custom-fashion client from inspiration to an approved tailoring order. It combines verified tailor accounts, client records, measurements, AI design previews, design versioning, branded approvals, credits, deposits and production handoff.
 
 ## What is implemented
 
+### Secure tailor accounts
+
+- passwordless email magic-link sign-in
+- single-use, short-lived sign-in links
+- expiring, revocable server-side sessions
+- sign out here and sign out all devices
+- cross-device restoration of the same studio, clients and credits
+- automatic first-sign-in migration of legacy browser studios and wallets
+- account ownership checks for studios, clients, consultations, jobs, images and payments
+- short-lived signed URLs for private generated job images
+- permanent account deletion that removes records and files
+
+See [Authentication](docs/authentication.md).
+
 ### Tailor consultation workflow
 
-- automatically creates a private browser-based studio workspace
 - studio branding: business name, tagline, logo, contact details and brand colour
 - create and reopen client records
-- save the client model photo and measurements
-- create and reopen consultations for each client
-- save inspiration images and outfit directions with the consultation
-- save generated try-ons as numbered design versions
-- apply simple fashion changes for neckline, sleeves, length, fit and colour
+- save client photos and measurements with an auditable consent record
+- create consultations and save inspiration images and design direction
+- save generated previews as numbered versions
+- apply focused changes to neckline, sleeves, length, fit and colour
 - create a branded client approval link
-- allow the client to approve a version or request changes
-- record quotation, deposit and tailoring-order status
+- record approval, quotation, deposit, order status and due date
+- print a production brief
 
 ### Real try-on workflow
 
 - model and inspiration uploads
 - centimetre/inch measurement conversion
-- event, garment, fit, fabric, colour and written design controls
+- event, garment, fit, fabric, colour and structured design controls
 - garment detection and reviewable crop
 - clean garment reconstruction and local chroma cleanup
 - identity-preserving try-on generation
-- one to three variations, with one result selected by default
+- one to three variations
 - approve, reject and corrective regeneration
 - before/after comparison
 
-### Payments and deployment
+### Payments and privacy
 
-- Paystack hosted checkout
-- M-PESA and card channel support
-- prepaid credit packages
-- idempotent payment verification and webhook fulfilment
+- Paystack hosted checkout with M-PESA and card support
+- prepaid credit packages owned by the authenticated account
+- idempotent verification and webhook fulfilment
 - server-controlled pricing
-- Render Blueprint and persistent disk configuration
-- GitHub Pages frontend support
+- seven-day purge for sensitive consultation media and temporary jobs
+- server-side consent timestamp, statement, version and confirming account ID
+- public approval responses exclude private photos, measurements, internal notes and payment references
 
-## Consultation flow
+## Core flow
 
 ```text
+Sign in with verified email
+        ↓
 Create or select client
         ↓
-Save model photo and measurements
+Confirm permission and save photo + measurements
         ↓
-Create consultation and upload inspiration
+Create consultation and design direction
         ↓
-Generate realistic try-on
+Generate, refine and save versions
         ↓
-Apply changes and save numbered versions
+Share branded approval
         ↓
-Create branded client approval link
+Record quote, deposit and order
         ↓
-Client approves or requests changes
-        ↓
-Record quote, deposit and tailoring order
+Print production handoff
 ```
 
 ## Storage model
@@ -65,22 +77,21 @@ Record quote, deposit and tailoring order
 Runtime data is stored beneath `DRESSCODE_DATA_DIR`:
 
 ```text
-jobs/             staged OpenAI try-on jobs and generated assets
-payments/         guest wallets, payment intents and credit ledger
-consultations/    studios, clients, measurements, versions, approvals and orders
+auth/             accounts, email index, magic links and sessions
+jobs/             account-owned try-on jobs and generated assets
+payments/         account wallets, payment intents and credit ledger
+consultations/    account-owned studios, clients, versions, approvals and orders
 ```
 
-The current studio and payment wallets use private browser tokens. This is suitable for an MVP, but account authentication and recovery are required before broad public use.
-
-Public approval links use revocable random tokens. Creating a new approval link invalidates the previous link. Public responses do not expose the client model photo, body measurements, internal notes, deposit reference or private studio token.
+This remains a file-backed MVP. Use a transactional database before multi-instance or high-volume deployment.
 
 ## Requirements
 
 - Node.js 20 or newer
-- OpenAI API key
-- Paystack secret key for payments
+- a Resend API key and verified sending domain for production sign-in email
+- an OpenAI API key for real try-on
+- a Paystack secret key for paid credits
 - persistent production storage
-- network access from the backend
 
 ## Run locally
 
@@ -90,11 +101,17 @@ cp .env.example .env
 npm start
 ```
 
+For local-only sign-in testing, keep `AUTH_DEV_SHOW_MAGIC_LINK=true`. Production must send the link by email instead.
+
 Open `http://localhost:4173`.
 
 ## Main environment variables
 
 ```bash
+RESEND_API_KEY=
+AUTH_EMAIL_FROM=Dresscode <signin@your-verified-domain.example>
+AUTH_FRONTEND_URL=https://biwotony.github.io/dresscode-virtual-stylist/
+AUTH_ASSET_SECRET=
 OPENAI_API_KEY=
 PAYSTACK_SECRET_KEY=
 PAYSTACK_CURRENCY=KES
@@ -102,10 +119,11 @@ PAYSTACK_CHANNELS=mobile_money,card
 PAYSTACK_CALLBACK_URL=https://biwotony.github.io/dresscode-virtual-stylist/
 PAYMENTS_REQUIRED=false
 DRESSCODE_DATA_DIR=.dresscode
+DRESSCODE_RETENTION_DAYS=7
 CORS_ORIGIN=https://biwotony.github.io
 ```
 
-Keep both secret keys on the server. Never place them in `public/config.js`, browser JavaScript or GitHub Pages settings.
+Keep all keys and signing secrets on the backend. Never place them in browser JavaScript or GitHub Pages configuration.
 
 ## Default credit packages
 
@@ -118,21 +136,18 @@ Keep both secret keys on the server. Never place them in `public/config.js`, bro
 
 Override packages with `PAYSTACK_PLANS_JSON`; see [Payments](docs/payments.md).
 
-## GitHub Pages and approval links
+## Deployment
 
-GitHub Pages hosts the frontend. The Render service hosts real try-on, consultations and payments.
+GitHub Pages hosts the frontend. Render hosts authentication, private data, generation and payments.
 
-After deploying the backend:
+Before the production sign-in flow works:
 
-1. Open **Backend connection** in the Pages app.
-2. Enter the Render service URL.
-3. Save it.
-4. Configure studio branding.
-5. Create a client and consultation.
-6. Generate and save a design version.
-7. Create the approval link.
-
-The approval URL includes the backend address so the client can open it from GitHub Pages without configuring anything.
+1. Verify a sending domain with the email provider.
+2. Set `RESEND_API_KEY` in Render.
+3. Set `AUTH_EMAIL_FROM` to an address on that verified domain.
+4. Keep `AUTH_DEV_SHOW_MAGIC_LINK` disabled in production.
+5. Confirm `AUTH_FRONTEND_URL` points to the Pages app.
+6. Test sign-in, migration, cross-device access, session revocation and account deletion.
 
 ## Validation
 
@@ -143,6 +158,7 @@ npm run check
 
 ## Documentation
 
+- [Authentication and ownership](docs/authentication.md)
 - [Consultation workflow](docs/consultations.md)
 - [Architecture](docs/architecture.md)
 - [Payments](docs/payments.md)
@@ -150,11 +166,12 @@ npm run check
 
 ## Important limitations
 
-- measurements are prompt guidance, not a 3D body scan or tailoring guarantee
-- generated images are visual design previews, not physical fit simulation
-- studio access is tied to a browser token and currently has no recovery
-- generated job assets retain the original MVP access model; authenticated accounts should protect all jobs and assets before broad launch
-- define photo retention, deletion, consent and refund policies before accepting public customers
+- measurements guide visual proportions; they are not a body scan or fit guarantee
+- generated previews are not physical fittings or pattern-cutting guarantees
+- account sessions are stored in browser local storage, but they expire, can be revoked and are no longer the recovery mechanism
+- the sign-in rate limiter is process-local and resets on backend restart
+- file-backed indexes are not transaction-safe for multi-instance deployment
+- account deletion is immediate and permanent; there is no restore bin
 
 ## Licence
 
