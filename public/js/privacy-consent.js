@@ -1,35 +1,7 @@
-const CONSENT_VERSION = '2026-07-29-compact';
-const STORAGE_PREFIX = 'dresscode-client-consent:';
+const CONSENT_VERSION = '2026-07-30-account';
+window.DRESSCODE_CONSENT_VERSION = CONSENT_VERSION;
 let activeClientId = null;
-
-function consentKey(clientId) {
-  return `${STORAGE_PREFIX}${clientId || 'draft'}`;
-}
-
-function readConsent(clientId) {
-  try {
-    const value = JSON.parse(localStorage.getItem(consentKey(clientId)) || 'null');
-    return Boolean(value?.confirmed && value?.version === CONSENT_VERSION);
-  } catch {
-    return false;
-  }
-}
-
-function writeConsent(clientId, confirmed) {
-  try {
-    if (!confirmed) {
-      localStorage.removeItem(consentKey(clientId));
-      return;
-    }
-    localStorage.setItem(consentKey(clientId), JSON.stringify({
-      confirmed: true,
-      confirmedAt: new Date().toISOString(),
-      version: CONSENT_VERSION
-    }));
-  } catch {
-    // Consent still applies for this page when browser storage is unavailable.
-  }
-}
+let draftConfirmed = false;
 
 function checkbox() {
   return document.getElementById('clientUploadConsent');
@@ -40,11 +12,10 @@ function errorMessage(text = '') {
   if (element) element.textContent = text;
 }
 
-function setConsentForClient(clientId) {
-  activeClientId = clientId || null;
+function setConsent(confirmed) {
   const input = checkbox();
-  if (!input) return;
-  input.checked = readConsent(activeClientId);
+  if (input) input.checked = Boolean(confirmed);
+  draftConfirmed = Boolean(confirmed);
   errorMessage('');
 }
 
@@ -69,15 +40,12 @@ function mountPrivacyNotice() {
     </details>
     <p id="privacyConsentError" class="privacy-consent-error" role="alert" aria-live="polite"></p>
   `;
-
   const clientMessage = panel.querySelector('#clientMessage');
   if (clientMessage) panel.insertBefore(notice, clientMessage);
   else panel.appendChild(notice);
-
-  const input = checkbox();
-  input.checked = readConsent(activeClientId);
-  input.addEventListener('change', () => {
-    writeConsent(activeClientId, input.checked);
+  checkbox().checked = draftConfirmed;
+  checkbox().addEventListener('change', () => {
+    draftConfirmed = checkbox().checked;
     errorMessage('');
   });
 }
@@ -87,7 +55,6 @@ function requireConsent(event) {
   if (!action) return;
   const input = checkbox();
   if (input?.checked) return;
-
   event.preventDefault();
   event.stopImmediatePropagation();
   errorMessage('Confirm client permission before saving the photo or starting generation.');
@@ -98,18 +65,16 @@ function requireConsent(event) {
 document.addEventListener('click', requireConsent, true);
 
 window.addEventListener('dresscode:load-client', event => {
-  const clientId = event.detail?.client?.id || null;
-  const draftConfirmed = readConsent(null);
-  activeClientId = clientId;
-  if (clientId && draftConfirmed && !readConsent(clientId)) {
-    writeConsent(clientId, true);
-    writeConsent(null, false);
-  }
-  setConsentForClient(clientId);
+  const client = event.detail?.client || null;
+  activeClientId = client?.id || null;
+  setConsent(Boolean(client?.consent?.confirmed) || (!client && draftConfirmed));
 });
 
 window.addEventListener('dresscode:set-active-consultation', event => {
-  if ('clientId' in (event.detail || {})) setConsentForClient(event.detail.clientId || null);
+  if (!event.detail?.clientId) {
+    activeClientId = null;
+    setConsent(false);
+  }
 });
 
 mountPrivacyNotice();
