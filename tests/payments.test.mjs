@@ -60,3 +60,16 @@ test('legacy wallet can be claimed into a verified account', async t => {
   assert.equal(claimed.balance, 7);
   assert.equal(claimed.ownerAccountId, '11111111-1111-4111-8111-111111111111');
 });
+
+test('a stale or foreign legacy wallet never blocks sign-in or exposes credits', async t => {
+  const store = await storeForTest(t);
+  const stale = '11111111-1111-4111-8111-111111111111.not-a-valid-secret';
+  const replacement = await store.claimWallet(stale, '22222222-2222-4222-8222-222222222222', 'new@example.com');
+  assert.equal(replacement.ownerAccountId, '22222222-2222-4222-8222-222222222222');
+  assert.equal(replacement.balance, 0);
+
+  const foreign = await store.createWallet({ ownerAccountId: '33333333-3333-4333-8333-333333333333', email: 'foreign@example.com' });
+  const isolated = await store.claimWallet(foreign.token, '44444444-4444-4444-8444-444444444444', 'other@example.com');
+  assert.notEqual(isolated.id, foreign.wallet.id);
+  assert.equal(isolated.balance, 0);
+});
