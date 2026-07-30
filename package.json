@@ -1,14 +1,14 @@
 {
   "name": "dresscode-virtual-stylist",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "private": true,
-  "description": "A custom-fashion consultation system that connects client records, AI design previews, approvals and production handoff.",
+  "description": "An authenticated custom-fashion consultation system connecting client records, AI design previews, approvals, payments and production handoff.",
   "type": "module",
   "scripts": {
     "dev": "node --import ./lib/retention-scheduler.mjs --watch server.mjs",
     "start": "node --import ./lib/retention-scheduler.mjs server.mjs",
     "test": "node --test",
-    "check": "node --check server.mjs && node --check lib/image-utils.mjs && node --check lib/openai-tryon.mjs && node --check lib/job-store.mjs && node --check lib/retention-scheduler.mjs && node --check lib/tryon-pipeline.mjs && node --check lib/payment-store.mjs && node --check lib/paystack-payments.mjs && node --check lib/consultation-store.mjs && node --check public/js/app.js && node --check public/js/api.js && node --check public/js/payments-ui.js && node --check public/js/consultations-ui.js && node --check public/js/privacy-consent.js && node --check public/js/product-studio.js && node --check public/js/approval.js && node --check public/config.js && node --check public/js/brief.js && node --check public/js/measurements.js"
+    "check": "node --check server.mjs && node --check lib/auth-store.mjs && node --check lib/image-utils.mjs && node --check lib/openai-tryon.mjs && node --check lib/job-store.mjs && node --check lib/retention-scheduler.mjs && node --check lib/tryon-pipeline.mjs && node --check lib/payment-store.mjs && node --check lib/paystack-payments.mjs && node --check lib/consultation-store.mjs && node --check public/js/app.js && node --check public/js/api.js && node --check public/js/auth-ui.js && node --check public/js/payments-ui.js && node --check public/js/consultations-ui.js && node --check public/js/privacy-consent.js && node --check public/js/product-studio.js && node --check public/js/approval.js && node --check public/config.js && node --check public/js/brief.js && node --check public/js/measurements.js"
   },
   "dependencies": {
     "sharp": "^0.34.5"
