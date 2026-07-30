@@ -168,9 +168,7 @@ $('signOutButton').addEventListener('click', async () => {
   setSessionToken('');
   state.account = null;
   dialog.close();
-  lockStudio();
-  window.dispatchEvent(new CustomEvent('dresscode:signed-out'));
-  setBusy(false);
+  window.location.reload();
 });
 
 $('signOutAllButton').addEventListener('click', async () => {
@@ -180,8 +178,7 @@ $('signOutAllButton').addEventListener('click', async () => {
     await signOutAllSessions();
     setSessionToken('');
     dialog.close();
-    lockStudio();
-    window.dispatchEvent(new CustomEvent('dresscode:signed-out'));
+    window.location.reload();
   } catch (error) {
     accountMessage.textContent = error.message;
   } finally {
@@ -204,9 +201,7 @@ $('deleteAccountButton').addEventListener('click', async () => {
     localStorage.removeItem('dresscode-payment-email');
     localStorage.removeItem('dresscode-last-payment-reference');
     dialog.close();
-    lockStudio();
-    showMessage('The account and its stored data were deleted.');
-    window.dispatchEvent(new CustomEvent('dresscode:signed-out'));
+    window.location.reload();
   } catch (error) {
     accountMessage.textContent = error.message;
   } finally {
@@ -215,7 +210,12 @@ $('deleteAccountButton').addEventListener('click', async () => {
 });
 
 window.addEventListener('dresscode:auth-required', () => {
+  const hadAccount = Boolean(state.account);
   setSessionToken('');
+  if (hadAccount) {
+    window.location.reload();
+    return;
+  }
   lockStudio();
   showMessage('Your session expired or was revoked. Sign in again.', true);
 });
