@@ -14,7 +14,7 @@ import {
 const state = { account: null, config: null, busy: false };
 const headerMount = document.getElementById('authMount');
 const gateMount = document.getElementById('authGateMount');
-const studio = document.getElementById('studio');
+const privateSections = [document.getElementById('studio'), document.querySelector('.workspace')].filter(Boolean);
 
 if (!headerMount || !gateMount) throw new Error('Authentication mounts are missing.');
 
@@ -88,7 +88,7 @@ function lockStudio() {
   document.body.classList.add('auth-locked');
   gate.classList.remove('hidden');
   accountButton.classList.add('hidden');
-  studio?.setAttribute('aria-hidden', 'true');
+  privateSections.forEach(section => section.setAttribute('aria-hidden', 'true'));
 }
 
 function unlockStudio(account) {
@@ -98,7 +98,7 @@ function unlockStudio(account) {
   accountButton.classList.remove('hidden');
   accountButton.textContent = account.email;
   $('accountEmail').textContent = account.email;
-  studio?.removeAttribute('aria-hidden');
+  privateSections.forEach(section => section.removeAttribute('aria-hidden'));
   window.dispatchEvent(new CustomEvent('dresscode:authenticated', { detail: { account } }));
 }
 
